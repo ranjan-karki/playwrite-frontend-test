@@ -47,11 +47,9 @@ test.describe('Site Add Test', () => {
       await expect(page.locator(selectors.sites.domainField)).toBeVisible();
       await expect(page.locator(selectors.sites.primaryColor)).toBeVisible();
       await expect(page.locator(selectors.sites.secondaryColor)).toBeVisible();
-      await expect(page.locator(selectors.sites.siteTextEditor)).toBeVisible();
       await expect(page.locator(selectors.common.saveButton)).toBeVisible();
       await expect(page.locator(selectors.common.cancelButton)).toBeVisible();
       await expect(page.locator(selectors.common.modalCloseButton)).toBeVisible();
-      await expect(page.locator(selectors.sites.siteAdvanceCreateButton)).toBeVisible();
     });
   });
 
@@ -79,7 +77,6 @@ test.describe('Site Add Test', () => {
       await page.locator(selectors.sites.imageUploader).setInputFiles(files.jpg);
       await page.locator(selectors.sites.titleField).fill(getRandomSubstring(10));
       await page.locator(selectors.sites.domainField).fill(randomAlphaNumeric(5).toLowerCase());
-      await page.locator(selectors.sites.siteTextEditor).fill(getRandomSubstring(50));
       await expect(page.locator(selectors.common.saveButton)).toBeEnabled();
     });
   });
@@ -168,7 +165,7 @@ test.describe('Site Add Test', () => {
   test.describe('Title Field Character Limit', () => {
     test('should accept title with 255 characters and should add site', async ({ page }) => {
       const title = randomAlphaNumeric(255);
-      await sitePage.fillCreateForm(files.jpg, title, randomAlphaNumeric(5).toLowerCase(), '', '', getRandomSubstring(100));
+      await sitePage.fillCreateForm(files.jpg, title, randomAlphaNumeric(5).toLowerCase(), '', '');
       await submitForm(page);
       await page.waitForTimeout(5000);
       await page.locator(selectors.common.searchField).first().fill(title);
@@ -177,7 +174,7 @@ test.describe('Site Add Test', () => {
 
     test('should show error when title exceeds 255 characters', async ({ page }) => {
       const title = randomAlphaNumeric(256);
-      await sitePage.fillCreateForm(files.jpg, title, randomAlphaNumeric(5).toLowerCase(), siteInputData.siteAdd.PrimaryColor, siteInputData.siteAdd.secondaryolor, getRandomSubstring(100));
+      await sitePage.fillCreateForm(files.jpg, title, randomAlphaNumeric(5).toLowerCase(), siteInputData.siteAdd.PrimaryColor, siteInputData.siteAdd.secondaryolor);
       await submitForm(page);
       await page.waitForTimeout(3000);
       await expect(page.locator(selectors.sites.titleErrorToolTip)).toBeVisible();
@@ -188,7 +185,7 @@ test.describe('Site Add Test', () => {
   test.describe('Domain Field Character Limit & Unique', () => {
     test('should accept domain with exactly 50 characters', async ({ page }) => {
       const domain = randomAlphaNumeric(50).toLowerCase();
-      await sitePage.fillCreateForm(files.jpg, getRandomSubstring(10), domain, '', '', getRandomSubstring(100));
+      await sitePage.fillCreateForm(files.jpg, getRandomSubstring(10), domain, '', '');
       await submitForm(page);
       await page.waitForTimeout(2000);
       await page.locator(selectors.common.searchField).first().fill(domain);
@@ -198,7 +195,7 @@ test.describe('Site Add Test', () => {
 
     test('should show error when domain exceeds 50 characters', async ({ page }) => {
       const domain = randomAlphaNumeric(51).toLowerCase();
-      await sitePage.fillCreateForm(files.jpg, getRandomSubstring(10), domain, '', '', getRandomSubstring(100));
+      await sitePage.fillCreateForm(files.jpg, getRandomSubstring(10), domain, '', '');
       await submitForm(page);
       await expect(page.locator(selectors.sites.domainErrorToolTip)).toBeVisible();
       await expect(page.locator(selectors.sites.domainErrorToolTip)).toContainText(messages.domainLengthLimit);
@@ -206,7 +203,7 @@ test.describe('Site Add Test', () => {
 
     test('should not accept domain with spaces between characters', async ({ page }) => {
       const domain = 'test domain name';
-      await sitePage.fillCreateForm(files.jpg, getRandomSubstring(10), domain, '', '', getRandomSubstring(100));
+      await sitePage.fillCreateForm(files.jpg, getRandomSubstring(10), domain, '', '');
       await submitForm(page);
       await expect(page.locator(selectors.sites.domainErrorToolTip)).toBeVisible();
       await expect(page.locator(selectors.sites.domainErrorToolTip)).toContainText(messages.domainCharConatin);
@@ -215,53 +212,22 @@ test.describe('Site Add Test', () => {
     test('should show error when trying to add duplicate domain', async ({ page }) => {
       const domain = 'test' + randomAlphaNumeric(8).toLowerCase();
 
-      await sitePage.fillCreateForm(files.jpg, getRandomSubstring(10), domain, '', '', getRandomSubstring(100));
+      await sitePage.fillCreateForm(files.jpg, getRandomSubstring(10), domain, '', '');
       await submitForm(page);
       await page.waitForTimeout(2000);
 
       await openAddForm(page);
-      await sitePage.fillCreateForm(files.jpg, getRandomSubstring(10), domain, '', '', getRandomSubstring(100));
+      await sitePage.fillCreateForm(files.jpg, getRandomSubstring(10), domain, '', '');
       await submitForm(page);
       await expect(page.locator(selectors.sites.domainErrorToolTip)).toBeVisible();
       await expect(page.locator(selectors.sites.domainErrorToolTip)).toContainText(messages.domainAlreadyTaken);
     });
   });
 
-  test.describe('Message Field Long Text Validation', () => {
-    test('should accept message with 2000 characters', async ({ page }) => {
-      const title = getRandomSubstring(50);
-      const longMessage = getRandomSubstring(2000);
-
-      await sitePage.fillCreateForm(files.jpg, title, randomAlphaNumeric(10).toLowerCase(), '', '', longMessage);
-      await submitForm(page);
-      await page.waitForTimeout(2000);
-
-      await page.locator(selectors.common.searchField).first().fill(title);
-      await page.locator(selectors.common.searchField).first().press('Enter');
-      await page.locator(selectors.sites.siteDetailViewSigleSite).click();
-      await page.waitForTimeout(3000);
-      await expect(page.locator(selectors.sites.messageInSitePreview)).toContainText(longMessage);
-    });
-
-    test('should accept message with special characters', async ({ page }) => {
-      const title = getRandomSubstring(50);
-      const message = 'Message with special chars: @#$%^&*()_+-={}[]|:;"<>,.?/';
-      await sitePage.fillCreateForm(files.jpg, title, randomAlphaNumeric(10).toLowerCase(), '', '', message);
-      await submitForm(page);
-      await page.waitForTimeout(2000);
-      await page.locator(selectors.common.searchField).first().fill(title);
-      await page.locator(selectors.common.searchField).first().press('Enter');
-      await page.locator(selectors.sites.siteDetailViewSigleSite).click();
-      await page.waitForTimeout(3000);
-      await expect(page.locator(selectors.sites.messageInSitePreview)).toContainText(message);
-    });
-  });
-
   test.describe('Cancel and Close Button Behavior', () => {
     test('should not trigger API when cancel button is clicked after filling all fields', async ({ page }) => {
       const title = getRandomSubstring(50);
-      const message = getRandomSubstring(200);
-      await sitePage.fillCreateForm(files.jpg, title, randomAlphaNumeric(10).toLowerCase(), '', '', message);
+      await sitePage.fillCreateForm(files.jpg, title, randomAlphaNumeric(10).toLowerCase(), '', '');
       await cancelForm(page);
       await page.locator(selectors.common.searchField).first().fill(title);
       await page.locator(selectors.common.searchField).first().press('Enter');
@@ -270,8 +236,7 @@ test.describe('Site Add Test', () => {
 
     test('should not trigger API when close button is clicked after filling all fields', async ({ page }) => {
       const title = getRandomSubstring(50);
-      const message = getRandomSubstring(200);
-      await sitePage.fillCreateForm(files.jpg, title, randomAlphaNumeric(10).toLowerCase(), '', '', message);
+      await sitePage.fillCreateForm(files.jpg, title, randomAlphaNumeric(10).toLowerCase(), '', '');
       await cancelForm(page);
       await page.locator(selectors.common.searchField).first().fill(title);
       await page.locator(selectors.common.searchField).first().press('Enter');
@@ -281,52 +246,38 @@ test.describe('Site Add Test', () => {
 
   test.describe('Security Tests - XSS and SQL Injection', () => {
     test('should handle XSS attempt in title field', async ({ page }) => {
-      await sitePage.fillCreateForm(files.jpg, securityPayloads.xss, randomAlphaNumeric(5).toLowerCase(), '', '', getRandomSubstring(100));
+      await sitePage.fillCreateForm(files.jpg, securityPayloads.xss, randomAlphaNumeric(5).toLowerCase(), '', '');
       await submitForm(page);
       await page.waitForTimeout(2000);
       await expect(page).toHaveTitle(PAGE_TITLE);
     });
 
     test('should handle SQL injection attempt in title field', async ({ page }) => {
-      await sitePage.fillCreateForm(files.jpg, securityPayloads.sql, randomAlphaNumeric(5).toLowerCase(), '', '', getRandomSubstring(100));
+      await sitePage.fillCreateForm(files.jpg, securityPayloads.sql, randomAlphaNumeric(5).toLowerCase(), '', '');
       await submitForm(page);
       await page.waitForTimeout(2000);
       await expect(page).toHaveTitle(PAGE_TITLE);
     });
 
     test('should handle XSS attempt in domain field', async ({ page }) => {
-      await sitePage.fillCreateForm(files.jpg, getRandomSubstring(10), securityPayloads.xss.toLowerCase(), '', '', getRandomSubstring(100));
+      await sitePage.fillCreateForm(files.jpg, getRandomSubstring(10), securityPayloads.xss.toLowerCase(), '', '');
       await submitForm(page);
       await expect(page.locator(selectors.sites.domainErrorToolTip)).toBeVisible();
       await expect(page.locator(selectors.sites.domainErrorToolTip)).toContainText(messages.domainCharConatin);
     });
 
     test('should handle SQL injection attempt in domain field', async ({ page }) => {
-      await sitePage.fillCreateForm(files.jpg, getRandomSubstring(10), securityPayloads.sql.toLowerCase(), '', '', getRandomSubstring(100));
+      await sitePage.fillCreateForm(files.jpg, getRandomSubstring(10), securityPayloads.sql.toLowerCase(), '', '');
       await submitForm(page);
       await expect(page.locator(selectors.sites.domainErrorToolTip)).toBeVisible();
       await expect(page.locator(selectors.sites.domainErrorToolTip)).toContainText(messages.domainCharConatin);
-    });
-
-    test('should handle XSS attempt in message field', async ({ page }) => {
-      await sitePage.fillCreateForm(files.jpg, getRandomSubstring(10), securityPayloads.sql.toLowerCase(), '', '', securityPayloads.xss);
-      await submitForm(page);
-      await expect(page.locator(selectors.sites.domainErrorToolTip)).toBeVisible();
-      await expect(page.locator(selectors.sites.domainErrorToolTip)).toContainText(messages.domainCharConatin);
-    });
-
-    test('should handle SQL injection attempt in message field', async ({ page }) => {
-      await sitePage.fillCreateForm(files.jpg, getRandomSubstring(10), randomAlphaNumeric(5).toLowerCase(), '', '', securityPayloads.sql);
-      await submitForm(page);
-      await page.waitForTimeout(2000);
-      await expect(page).toHaveTitle(PAGE_TITLE);
     });
   });
 
   test.describe('Successful Site Creation with minimum char length', () => {
     test('should successfully create site with minimum title length', async ({ page }) => {
       const title = getRandomSubstring(1);
-      await sitePage.fillCreateForm(files.jpg, title, randomAlphaNumeric(5).toLowerCase(), '', '', getRandomSubstring(100));
+      await sitePage.fillCreateForm(files.jpg, title, randomAlphaNumeric(5).toLowerCase(), '', '');
       await submitForm(page);
       await page.waitForTimeout(2000);
       await expect(page).toHaveTitle(PAGE_TITLE);
@@ -337,18 +288,7 @@ test.describe('Site Add Test', () => {
 
     test('should successfully create site with minimum domain length', async ({ page }) => {
       const title = getRandomSubstring(10);
-      await sitePage.fillCreateForm(files.jpg, title, randomAlphaNumeric(1).toLowerCase(), '', '', getRandomSubstring(100));
-      await submitForm(page);
-      await page.waitForTimeout(2000);
-      await expect(page).toHaveTitle(PAGE_TITLE);
-      await page.locator(selectors.common.searchField).first().fill(title);
-      await page.locator(selectors.common.searchField).first().press('Enter');
-      await expect(page.locator(selectors.sites.titleOfFirstSiteCardView)).toBeVisible();
-    });
-
-    test('should successfully create site with minimum message length', async ({ page }) => {
-      const title = getRandomSubstring(10);
-      await sitePage.fillCreateForm(files.jpg, title, randomAlphaNumeric(10).toLowerCase(), '', '', getRandomSubstring(1));
+      await sitePage.fillCreateForm(files.jpg, title, randomAlphaNumeric(1).toLowerCase(), '', '');
       await submitForm(page);
       await page.waitForTimeout(2000);
       await expect(page).toHaveTitle(PAGE_TITLE);
