@@ -1,0 +1,20 @@
+{
+  "name": "playwright-lyb-fe-tests",
+  "version": "1.0.0",
+  "description": "Playwright E2E tests for LearnYour Benefits frontend",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:report": "playwright show-report",
+    "test:login": "playwright test tests/auth/",
+    "test:sites": "playwright test tests/sites/",
+    "test:resellers": "playwright test tests/resellers/",
+    "test:videos": "playwright test tests/videos/",
+    "test:staging": "ENV=staging playwright test",
+    "test:local": "ENV=local playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.47.0"
+  }
+}

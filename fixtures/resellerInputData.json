@@ -1,0 +1,19 @@
+{
+  "file": {
+    "jpg": "fixtures/uploadfiles/lion_king.jpg",
+    "svg": "fixtures/uploadfiles/lion_king.jpg",
+    "png": "fixtures/uploadfiles/Bbb-splash3.png",
+    "jpeg": "fixtures/uploadfiles/sample.jpeg",
+    "xls": "fixtures/uploadfiles/file.xls",
+    "ppt": "fixtures/uploadfiles/sample.pptx",
+    "pdf": "fixtures/uploadfiles/A17_FlightPlan.pdf",
+    "exe": "fixtures/uploadfiles/7z.exe",
+    "jfif": "fixtures/uploadfiles/downlaod.jiff",
+    "doc": "fixtures/uploadfiles/file.doc"
+  },
+  "resellerAdd": {
+    "PrimaryColor": "#333744",
+    "secondaryColor": "#597a43"
+  },
+  "resellerEdit": {}
+}

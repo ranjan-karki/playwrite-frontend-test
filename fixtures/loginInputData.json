@@ -1,0 +1,6 @@
+{
+  "valid_username": "ranjan.karki@ensue.us",
+  "valid_password": "Ranjan!1",
+  "invalid_username": "ranjan.karki@gmail.com",
+  "invalid_password": "Incorrectpassword"
+}
