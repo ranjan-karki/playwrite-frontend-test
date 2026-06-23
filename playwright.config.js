@@ -15,7 +15,8 @@ module.exports = defineConfig({
   ],
 
   use: {
-    baseURL: 'http://localhost:4200',
+    baseURL: 'http://admin.learnyourcare.com',
+    //baseURL: 'http://localhost:4200',
     screenshot: 'only-on-failure',
     trace: 'on-first-retry',
     actionTimeout: 15000,

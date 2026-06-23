@@ -4,7 +4,7 @@ import { LoginPage } from './pages/LoginPage';
 export const CREDENTIALS = {
   valid: {
     username: 'ranjan.karki@ensue.us',
-    password: 'Ensue@2026',
+    password: 'Ensue@2027',
   },
   wrongPassword: {
     username: 'ranjan.karki@ensue.us',

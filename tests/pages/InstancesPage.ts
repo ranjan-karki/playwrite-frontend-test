@@ -27,7 +27,7 @@ export class InstancesPage {
   constructor(page: Page) {
     this.page = page;
     this.pageHeading = page.getByRole('heading', { name: 'Site instances' });
-    this.newInstanceButton = page.getByRole('button', { name: ' New instance' });
+    this.newInstanceButton = page.getByRole('button', { name: 'New instance', exact: true });
     this.formHeading = page.getByRole('heading', { name: 'Create new instance' });
     this.titleInput = page.getByRole('textbox', { name: 'Title' });
     this.slugInput = page.getByRole('textbox', { name: 'Slug' });
@@ -35,8 +35,8 @@ export class InstancesPage {
     this.secondaryColorInput = page.getByRole('textbox', { name: 'Secondary color' });
     this.layoutTile = page.getByRole('img', { name: 'lyb-global-tile' });
     this.layoutTilePlus = page.getByRole('img', { name: 'lyb global tile plus' });
-    this.createButton = page.getByRole('button', { name: 'Create' });
-    this.cancelButton = page.getByRole('button', { name: 'Cancel' });
+    this.createButton = page.locator('#site-instance-create-edit-form').getByRole('button', { name: 'Create', exact: true });
+    this.cancelButton = page.locator('#site-instance-create-edit-form').getByRole('button', { name: 'Cancel', exact: true });
   }
 
   async goto(siteId: number) {

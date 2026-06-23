@@ -17,6 +17,28 @@ test.describe('Login', () => {
     await expect(loginPage.forgotPasswordLink).toBeVisible();
   });
 
+  // ── Login button enable / disable logic ───────────────────────────────────
+
+  test('login button is disabled when both fields are empty', async () => {
+    await expect(loginPage.loginButton).toBeDisabled();
+  });
+
+  test('login button is disabled when only username is filled', async () => {
+    await loginPage.usernameInput.fill(CREDENTIALS.valid.username);
+    await expect(loginPage.loginButton).toBeDisabled();
+  });
+
+  test('login button is disabled when only password is filled', async () => {
+    await loginPage.passwordInput.fill(CREDENTIALS.valid.password);
+    await expect(loginPage.loginButton).toBeDisabled();
+  });
+
+  test('login button is enabled when both username and password are filled', async () => {
+    await loginPage.usernameInput.fill(CREDENTIALS.valid.username);
+    await loginPage.passwordInput.fill(CREDENTIALS.valid.password);
+    await expect(loginPage.loginButton).toBeEnabled();
+  });
+
   test('successful login navigates to Sites management', async ({ page }) => {
     await loginPage.login(CREDENTIALS.valid.username, CREDENTIALS.valid.password);
     await expect(page.getByRole('heading', { name: 'Sites management' })).toBeVisible();

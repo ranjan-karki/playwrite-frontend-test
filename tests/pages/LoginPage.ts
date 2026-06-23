@@ -18,7 +18,7 @@ export class LoginPage {
     this.heading = page.getByRole('heading', { name: 'Login' });
     this.usernameInput = page.getByRole('textbox', { name: 'Username' });
     this.passwordInput = page.getByRole('textbox', { name: 'Password' });
-    this.loginButton = page.getByRole('button', { name: 'Login' });
+    this.loginButton = page.getByRole('button', { name: 'Login', exact: true });
     this.forgotPasswordLink = page.getByRole('link', { name: 'Forgot password?' });
     this.cancelLink = page.getByRole('link', { name: 'Cancel' });
     this.errorBanner = page.getByText('Invalid username/password');
@@ -34,6 +34,7 @@ export class LoginPage {
     await this.usernameInput.fill(username);
     await this.passwordInput.fill(password);
     await this.loginButton.click();
+    await this.page.waitForLoadState('networkidle');
   }
 
   async assertOnLoginPage() {
