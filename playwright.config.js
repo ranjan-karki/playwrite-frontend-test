@@ -1,40 +1,30 @@
 // @ts-check
 const { defineConfig, devices } = require('@playwright/test');
 
-const ENV = process.env.ENV || 'local';
-const envConfig = require('./playwright.env.json')[ENV];
-
-const STORAGE_STATE = 'auth/storageState.json';
-
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
 module.exports = defineConfig({
   testDir: './tests',
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 1 : 0,
-  workers: 1,
-  reporter: [['html'], ['list']],
-  timeout: 60000,
+  retries: process.env.CI ? 2 : 0,
+  workers: process.env.CI ? 1 : undefined,
+
+  reporter: [
+    ['html', { open: 'always', host: 'localhost', port: 3939 }],
+    ['list'],
+  ],
 
   use: {
-    baseURL: envConfig.baseUrl,
-    trace: 'on-first-retry',
+    baseURL: 'http://localhost:4200',
     screenshot: 'only-on-failure',
-    video: 'on-first-retry',
+    trace: 'on-first-retry',
+    actionTimeout: 15000,
+    navigationTimeout: 30000,
   },
 
   projects: [
-    {
-      name: 'auth-setup',
-      testMatch: /auth\.setup\.js/,
-      testDir: './auth',
-    },
-    {
-      name: 'chromium',
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: STORAGE_STATE,
-      },
-      dependencies: ['auth-setup'],
-    },
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
+    { name: 'webkit',  use: { ...devices['Desktop Safari'] } },
   ],
 });
