@@ -27,7 +27,7 @@ export class InstancesPage {
   constructor(page: Page) {
     this.page = page;
     this.pageHeading = page.getByRole('heading', { name: 'Site instances' });
-    this.newInstanceButton = page.getByRole('button', { name: 'New instance', exact: true });
+    this.newInstanceButton = page.getByRole('button', { name: /New instance/ });
     this.formHeading = page.getByRole('heading', { name: 'Create new instance' });
     this.titleInput = page.getByRole('textbox', { name: 'Title' });
     this.slugInput = page.getByRole('textbox', { name: 'Slug' });
@@ -39,8 +39,12 @@ export class InstancesPage {
     this.cancelButton = page.locator('#site-instance-create-edit-form').getByRole('button', { name: 'Cancel', exact: true });
   }
 
-  async goto(siteId: number) {
-    await this.page.goto(`/manage/sites/${siteId}/instances`);
+  async goto(siteName: string) {
+    await this.page.goto('/manage/sites');
+    await this.page.waitForLoadState('networkidle');
+    await this.page.getByText(siteName, { exact: true }).click();
+    await this.page.waitForLoadState('networkidle');
+    await this.page.getByRole('link', { name: 'Instances' }).click();
     await this.page.waitForLoadState('networkidle');
   }
 

@@ -1,32 +1,8 @@
 import { test as base, Page } from '@playwright/test';
 import { LoginPage } from './pages/LoginPage';
+import { CREDENTIALS, SITE_NAMES, LIMITS, LAYOUTS, INVALID_SLUGS } from './data/testData';
 
-export const CREDENTIALS = {
-  valid: {
-    username: 'ranjan.karki@ensue.us',
-    password: 'Ensue@2027',
-  },
-  wrongPassword: {
-    username: 'ranjan.karki@ensue.us',
-    password: 'wrong-password',
-  },
-  wrongUsername: {
-    username: 'nobody@example.com',
-    password: 'Ensue@2026',
-  },
-};
-
-export const SITE_IDS = {
-  main: 7,
-  secondary: 10,
-  deleted: 11,
-};
-
-export const LAYOUTS = {
-  tile: 'lyb-global-tile',
-  tilePlus: 'lyb-global-tile-plus',
-} as const;
-
+export { CREDENTIALS, SITE_NAMES, LIMITS, LAYOUTS, INVALID_SLUGS };
 export { expect } from '@playwright/test';
 
 export const test = base.extend<{ authenticatedPage: Page }>({

@@ -1,7 +1,16 @@
 import { test, expect } from '@playwright/test';
-import { CREDENTIALS, SITE_IDS } from './fixtures';
+import { CREDENTIALS, SITE_NAMES, LAYOUTS, INVALID_SLUGS } from './fixtures';
 import { LoginPage } from './pages/LoginPage';
 import { InstancesPage } from './pages/InstancesPage';
+import {
+  generateTitle,
+  generateSlug,
+  generateUniqueSlug,
+  generateMinTitle,
+  generateMinSlug,
+  generateBoundaryTitle,
+  generateBoundarySlug,
+} from './utils/generators';
 
 test.describe.serial('Instances', () => {
   let instancesPage: InstancesPage;
@@ -22,7 +31,7 @@ test.describe.serial('Instances', () => {
   });
 
   test.beforeEach(async () => {
-    await instancesPage.goto(SITE_IDS.main);
+    await instancesPage.goto(SITE_NAMES.main);
   });
 
   // ── List page ─────────────────────────────────────────────────────────────
@@ -58,25 +67,25 @@ test.describe.serial('Instances', () => {
 
   test('Create button is disabled when title is empty', async () => {
     await instancesPage.openNewInstanceForm();
-    await instancesPage.fillForm({ slug: 'valid-slug', layout: 'tile' });
+    await instancesPage.fillForm({ slug: generateSlug(), layout: LAYOUTS.tile });
     await expect(instancesPage.createButton).toBeDisabled();
   });
 
   test('Create button is disabled when slug is empty', async () => {
     await instancesPage.openNewInstanceForm();
-    await instancesPage.fillForm({ title: 'Test Instance', layout: 'tile' });
+    await instancesPage.fillForm({ title: generateTitle(), layout: LAYOUTS.tile });
     await expect(instancesPage.createButton).toBeDisabled();
   });
 
   test('Create button is disabled when no theme is selected', async () => {
     await instancesPage.openNewInstanceForm();
-    await instancesPage.fillForm({ title: 'Test Instance', slug: 'valid-slug' });
+    await instancesPage.fillForm({ title: generateTitle(), slug: generateSlug() });
     await expect(instancesPage.createButton).toBeDisabled();
   });
 
   test('Create button enables only when title, slug, and theme are all filled', async () => {
     await instancesPage.openNewInstanceForm();
-    await instancesPage.fillForm({ title: 'Test', slug: 'valid-slug', layout: 'tile' });
+    await instancesPage.fillForm({ title: generateTitle(), slug: generateSlug(), layout: LAYOUTS.tile });
     await expect(instancesPage.createButton).toBeEnabled();
   });
 
@@ -84,19 +93,19 @@ test.describe.serial('Instances', () => {
 
   test('title with 1 character enables Create button', async () => {
     await instancesPage.openNewInstanceForm();
-    await instancesPage.fillForm({ title: 'a', slug: 'valid-slug', layout: 'tile' });
+    await instancesPage.fillForm({ title: generateMinTitle(), slug: generateSlug(), layout: LAYOUTS.tile });
     await expect(instancesPage.createButton).toBeEnabled();
   });
 
   test('title with exactly 255 characters enables Create button', async () => {
     await instancesPage.openNewInstanceForm();
-    await instancesPage.fillForm({ title: 'a'.repeat(255), slug: 'valid-slug', layout: 'tile' });
+    await instancesPage.fillForm({ title: generateBoundaryTitle(), slug: generateSlug(), layout: LAYOUTS.tile });
     await expect(instancesPage.createButton).toBeEnabled();
   });
 
   test('title exceeding 255 characters disables Create button', async () => {
     await instancesPage.openNewInstanceForm();
-    await instancesPage.fillForm({ title: 'a'.repeat(256), slug: 'valid-slug', layout: 'tile' });
+    await instancesPage.fillForm({ title: generateBoundaryTitle(1), slug: generateSlug(), layout: LAYOUTS.tile });
     await expect(instancesPage.createButton).toBeDisabled();
   });
 
@@ -104,20 +113,19 @@ test.describe.serial('Instances', () => {
 
   test('slug with 1 character (single letter) enables Create button', async () => {
     await instancesPage.openNewInstanceForm();
-    await instancesPage.fillForm({ title: 'Test', slug: 'a', layout: 'tile' });
+    await instancesPage.fillForm({ title: generateTitle(), slug: generateMinSlug(), layout: LAYOUTS.tile });
     await expect(instancesPage.createButton).toBeEnabled();
   });
 
   test('slug with exactly 50 characters enables Create button', async () => {
     await instancesPage.openNewInstanceForm();
-    // starts with a letter to satisfy slug format rule
-    await instancesPage.fillForm({ title: 'Test', slug: 'a' + 'b'.repeat(49), layout: 'tile' });
+    await instancesPage.fillForm({ title: generateTitle(), slug: generateBoundarySlug(), layout: LAYOUTS.tile });
     await expect(instancesPage.createButton).toBeEnabled();
   });
 
   test('slug exceeding 50 characters disables Create button', async () => {
     await instancesPage.openNewInstanceForm();
-    await instancesPage.fillForm({ title: 'Test', slug: 'a' + 'b'.repeat(50), layout: 'tile' });
+    await instancesPage.fillForm({ title: generateTitle(), slug: generateBoundarySlug(1), layout: LAYOUTS.tile });
     await expect(instancesPage.createButton).toBeDisabled();
   });
 
@@ -125,56 +133,57 @@ test.describe.serial('Instances', () => {
 
   test('slug with leading hyphen is rejected', async () => {
     await instancesPage.openNewInstanceForm();
-    await instancesPage.fillForm({ title: 'Test', slug: '-invalid', layout: 'tile' });
+    await instancesPage.fillForm({ title: generateTitle(), slug: INVALID_SLUGS.leadingHyphen, layout: LAYOUTS.tile });
     await expect(instancesPage.createButton).toBeDisabled();
   });
 
   test('slug with trailing hyphen is rejected', async () => {
     await instancesPage.openNewInstanceForm();
-    await instancesPage.fillForm({ title: 'Test', slug: 'invalid-', layout: 'tile' });
+    await instancesPage.fillForm({ title: generateTitle(), slug: INVALID_SLUGS.trailingHyphen, layout: LAYOUTS.tile });
     await expect(instancesPage.createButton).toBeDisabled();
   });
 
   test('slug with consecutive hyphens is rejected', async () => {
     await instancesPage.openNewInstanceForm();
-    await instancesPage.fillForm({ title: 'Test', slug: 'bad--slug', layout: 'tile' });
+    await instancesPage.fillForm({ title: generateTitle(), slug: INVALID_SLUGS.consecutiveHyphens, layout: LAYOUTS.tile });
     await expect(instancesPage.createButton).toBeDisabled();
   });
 
   test('slug with uppercase letters is rejected', async () => {
     await instancesPage.openNewInstanceForm();
-    await instancesPage.fillForm({ title: 'Test', slug: 'UPPERCASE', layout: 'tile' });
+    await instancesPage.fillForm({ title: generateTitle(), slug: INVALID_SLUGS.uppercase, layout: LAYOUTS.tile });
     await expect(instancesPage.createButton).toBeDisabled();
   });
 
   test('slug with spaces is rejected', async () => {
     await instancesPage.openNewInstanceForm();
-    await instancesPage.fillForm({ title: 'Test', slug: 'has space', layout: 'tile' });
+    await instancesPage.fillForm({ title: generateTitle(), slug: INVALID_SLUGS.withSpaces, layout: LAYOUTS.tile });
     await expect(instancesPage.createButton).toBeDisabled();
   });
 
   test('slug that is only digits is rejected', async () => {
     await instancesPage.openNewInstanceForm();
-    await instancesPage.fillForm({ title: 'Test', slug: '12345', layout: 'tile' });
+    await instancesPage.fillForm({ title: generateTitle(), slug: INVALID_SLUGS.onlyDigits, layout: LAYOUTS.tile });
     await expect(instancesPage.createButton).toBeDisabled();
   });
 
   test('slug as single hyphen is rejected', async () => {
     await instancesPage.openNewInstanceForm();
-    await instancesPage.fillForm({ title: 'Test', slug: '-', layout: 'tile' });
+    await instancesPage.fillForm({ title: generateTitle(), slug: INVALID_SLUGS.singleHyphen, layout: LAYOUTS.tile });
     await expect(instancesPage.createButton).toBeDisabled();
   });
 
   // ── Successful creation ───────────────────────────────────────────────────
 
   test('create instance with valid title, slug and theme succeeds', async () => {
-    const slug = `test-inst-${Date.now()}`;
+    const title = generateTitle();
+    const slug = generateUniqueSlug('test-inst');
     await instancesPage.openNewInstanceForm();
-    await instancesPage.fillForm({ title: 'Test Instance', slug, layout: 'tile-plus' });
+    await instancesPage.fillForm({ title, slug, layout: LAYOUTS.tilePlus });
     await expect(instancesPage.createButton).toBeEnabled();
     await instancesPage.createButton.click();
     await instancesPage.page.waitForLoadState('networkidle');
     await expect(instancesPage.pageHeading).toBeVisible();
-    await expect(instancesPage.instanceCard('Test Instance')).toBeVisible();
+    await expect(instancesPage.instanceCard(title)).toBeVisible();
   });
 });
