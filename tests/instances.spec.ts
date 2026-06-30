@@ -1,6 +1,5 @@
-import { test, expect } from '@playwright/test';
-import { CREDENTIALS, SITE_NAMES, LAYOUTS, INVALID_SLUGS } from './fixtures';
-import { LoginPage } from './pages/LoginPage';
+import { expect } from '@playwright/test';
+import { test, SITE_NAMES, LAYOUTS, INVALID_SLUGS } from './fixtures';
 import { InstancesPage } from './pages/InstancesPage';
 import {
   generateTitle,
@@ -15,22 +14,9 @@ import {
 test.describe.serial('Instances', () => {
   let instancesPage: InstancesPage;
 
-  test.beforeAll(async ({ browser }) => {
-    const context = await browser.newContext();
-    const page = await context.newPage();
-    const loginPage = new LoginPage(page);
-    await loginPage.goto();
-    await loginPage.login(CREDENTIALS.valid.username, CREDENTIALS.valid.password);
-    await page.waitForURL('**/manage/sites**');
-    await page.waitForLoadState('networkidle');
-    instancesPage = new InstancesPage(page);
-  });
-
-  test.afterAll(async () => {
-    await instancesPage.page.context().close();
-  });
-
-  test.beforeEach(async () => {
+  test.beforeEach(async ({ authenticatedPage }) => {
+    test.setTimeout(60000);
+    instancesPage = new InstancesPage(authenticatedPage);
     await instancesPage.goto(SITE_NAMES.main);
   });
 

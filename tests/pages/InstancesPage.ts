@@ -41,7 +41,6 @@ export class InstancesPage {
 
   async goto(siteName: string) {
     await this.page.goto('/manage/sites');
-    await this.page.waitForLoadState('networkidle');
     await this.page.getByText(siteName, { exact: true }).click();
     await this.page.waitForLoadState('networkidle');
     await this.page.getByRole('link', { name: 'Instances' }).click();
