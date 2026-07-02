@@ -2,13 +2,16 @@
 import { test, expect } from '../../fixtures/auth.fixture.js';
 import { SitesPage } from '../../pages/SitesPage.js';
 import { SiteInstancesPage } from '../../pages/SiteInstancesPage.js';
+import { requireEnv } from '../../utils/env.js';
 
-test.describe('Pet-benefits site instances', () => {
+const siteName = requireEnv('TEST_SITE_NAME');
+
+test.describe(`${siteName} site instances`, () => {
   test('displays site instances page controls', async ({ authenticatedPage }) => {
     const sitesPage = new SitesPage(authenticatedPage);
     const siteInstancesPage = new SiteInstancesPage(authenticatedPage);
 
-    await sitesPage.selectProduct('Pet-benefits');
+    await sitesPage.selectProduct(siteName);
 
     await expect(siteInstancesPage.heading).toBeVisible();
     await expect(siteInstancesPage.newInstanceButton).toBeVisible();
