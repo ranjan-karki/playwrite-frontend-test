@@ -29,8 +29,9 @@ export class SiteInstancesPage {
     this.secondaryColorLabel = page.getByText('Secondary color');
     this.secondaryColorInput = page.getByRole('textbox', { name: 'Secondary color' });
     this.cancelCreateButtons = page.getByText('Cancel Create');
-    this.lybTilePlusThumb = page.locator('div').filter({ hasText: 'Lyb tile plus' }).nth(5);
-    this.lybTilePlusImage = page.getByRole('img', { name: 'Lyb tile plus' });
+    this.lybTilePlusThumb = page.locator('div').filter({ hasText: 'lyb global tile plus' }).nth(5);
+    this.lybTilePlusImage = page.getByRole('img', { name: 'lyb global tile plus' });
+    this.selectedThemeCheckmark = page.locator('.layout-item .fas.fa-check-circle');
     this.createButton = page.getByRole('button', { name: 'Create' });
     this.closeButton = page.getByRole('button', { name: 'Close' });
   }

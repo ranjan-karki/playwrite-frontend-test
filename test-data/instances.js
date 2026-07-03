@@ -6,3 +6,8 @@ export const SLUG_NOTE =
 export const newInstanceInputs = {
   title: 'title',
 };
+
+export const defaultThemeColors = {
+  primary: '#000000',
+  secondary: '#FFFFFF',
+};
