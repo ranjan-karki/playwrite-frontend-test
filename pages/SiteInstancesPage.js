@@ -34,6 +34,14 @@ export class SiteInstancesPage {
     this.selectedThemeCheckmark = page.locator('.layout-item .fas.fa-check-circle');
     this.createButton = page.getByRole('button', { name: 'Create' });
     this.closeButton = page.getByRole('button', { name: 'Close' });
+    this.titleLengthError = page.getByText('The title may not be greater than 255 characters.');
+    this.slugLengthError = page.getByText('The slug may not be greater than 50 characters.');
+
+    // Edit instance form
+    this.editInstanceHeading = page.getByRole('heading', { name: ' Edit instance' });
+    this.editMenuItem = page.getByText('Edit', { exact: true });
+    this.cancelEditButtons = page.getByText('Cancel Edit');
+    this.saveButton = page.getByRole('button', { name: 'Save' });
   }
 
   async openNewInstanceForm() {
@@ -50,11 +58,28 @@ export class SiteInstancesPage {
     await this.slugLabel.click();
   }
 
+  /** @param {string} slug */
+  async fillSlug(slug) {
+    await this.slugInput.click();
+    await this.slugInput.fill(slug);
+  }
+
   async selectLybTileTheme() {
     await this.lybTilePlusImage.click();
   }
 
   async closeForm() {
     await this.closeButton.click();
+  }
+
+  /** @param {string} name */
+  async openEditForm(name) {
+    await this.page.locator('div').filter({ hasText: new RegExp(`^${name}$`) }).nth(3).click();
+    await this.page.locator('button').nth(4).click();
+    await this.editMenuItem.click();
+  }
+
+  async save() {
+    await this.saveButton.click();
   }
 }
