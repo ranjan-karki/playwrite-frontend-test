@@ -163,8 +163,8 @@ test.describe(`${siteName} - Add instance`, () => {
 
     await form.openNewInstanceForm();
     await form.fillTitle(title);
-    await form.slugInput.click();
     await form.fillSlug(newInstanceInputs.minSlug);
+    await form.slugInput.click();
     await form.createButton.click();
 
     await expect(form.createInstanceHeading).not.toBeVisible();
@@ -183,6 +183,7 @@ test.describe(`${siteName} - Add instance`, () => {
     await form.openNewInstanceForm();
     await form.fillTitle(title);
     await form.fillSlug(newInstanceInputs.maxSlug);
+    await form.slugInput.click();
     await form.createButton.click();
 
     await expect(form.createInstanceHeading).not.toBeVisible();
