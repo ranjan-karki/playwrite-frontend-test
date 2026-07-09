@@ -11,7 +11,8 @@ const instanceName = requireEnv('TEST_INSTANCE_NAME');
 test.describe(`${siteName} - Update instance`, () => {
   test.beforeEach(async ({ authenticatedPage }) => {
     const sitesPage = new SitesPage(authenticatedPage);
-    await sitesPage.selectProduct(siteName);
+    await authenticatedPage.goto('/manage/sites');
+    await sitesPage.selectSite(siteName);
   });
 
   test('displays edit instance form fields', async ({ authenticatedPage }) => {
@@ -86,7 +87,7 @@ test.describe(`${siteName} - Update instance`, () => {
     await form.closeForm();
   });
 
-  test('shows validation error when slug exceeds 50 characters', async ({ authenticatedPage }) => {
+  test('shows validation error when slug exceeds 60 characters', async ({ authenticatedPage }) => {
     const form = new SiteInstancesPage(authenticatedPage);
 
     await form.openEditForm(instanceName);
@@ -96,5 +97,91 @@ test.describe(`${siteName} - Update instance`, () => {
     await expect(form.slugLengthError).toBeVisible();
 
     await form.closeForm();
+  });
+
+  test('updates title with a minimum-length value', async ({ authenticatedPage }) => {
+    const form = new SiteInstancesPage(authenticatedPage);
+
+    await form.openEditForm(instanceName);
+    await form.fillTitle(updateInstanceInputs.minTitle);
+    await form.save();
+
+    await expect(authenticatedPage.getByText(updateInstanceInputs.minTitle, { exact: true })).toBeVisible();
+
+    // Restore the original title so later tests can still find this instance by name.
+    await form.openEditForm(updateInstanceInputs.minTitle);
+    await form.fillTitle(instanceName);
+    await form.save();
+  });
+
+  test('updates title with a maximum-length (255 char) value', async ({ authenticatedPage }) => {
+    const form = new SiteInstancesPage(authenticatedPage);
+
+    await form.openEditForm(instanceName);
+    await form.fillTitle(updateInstanceInputs.maxTitle);
+    await form.save();
+
+    await expect(authenticatedPage.getByText(updateInstanceInputs.maxTitle, { exact: true })).toBeVisible();
+
+    // Restore the original title so later tests can still find this instance by name.
+    await form.openEditForm(updateInstanceInputs.maxTitle);
+    await form.fillTitle(instanceName);
+    await form.save();
+  });
+
+  test('updates slug with a minimum-length value', async ({ authenticatedPage }) => {
+    const form = new SiteInstancesPage(authenticatedPage);
+    const tempTitle = 'Min slug holder';
+
+    // Slugs must be unique, so claim the boundary value with a throwaway instance first,
+    // then free it up again so it can be applied to the real target instance below.
+    await form.openNewInstanceForm();
+    await form.fillTitle(tempTitle);
+    await form.fillSlug(updateInstanceInputs.minSlug);
+    const preservedSlug = await form.slugInput.inputValue();
+    await form.createButton.click();
+    await expect(form.createInstanceHeading).not.toBeVisible();
+
+    await form.deleteInstance(tempTitle);
+
+    await form.openEditForm(instanceName);
+    const originalSlug = await form.slugInput.inputValue();
+
+    await form.fillSlug(preservedSlug);
+    await form.save();
+
+    await form.openEditForm(instanceName);
+    await expect(form.slugInput).toHaveValue(preservedSlug);
+
+    // Restore the original slug so the environment is left unchanged.
+    await form.fillSlug(originalSlug);
+    await form.save();
+  });
+
+  test('updates slug with a maximum-length (60 char) value', async ({ authenticatedPage }) => {
+    const form = new SiteInstancesPage(authenticatedPage);
+    const tempTitle = 'Max slug holder';
+
+    await form.openNewInstanceForm();
+    await form.fillTitle(tempTitle);
+    await form.fillSlug(updateInstanceInputs.maxSlug);
+    const preservedSlug = await form.slugInput.inputValue();
+    await form.createButton.click();
+    await expect(form.createInstanceHeading).not.toBeVisible();
+
+    await form.deleteInstance(tempTitle);
+
+    await form.openEditForm(instanceName);
+    const originalSlug = await form.slugInput.inputValue();
+
+    await form.fillSlug(preservedSlug);
+    await form.save();
+
+    await form.openEditForm(instanceName);
+    await expect(form.slugInput).toHaveValue(preservedSlug);
+
+    // Restore the original slug so the environment is left unchanged.
+    await form.fillSlug(originalSlug);
+    await form.save();
   });
 });

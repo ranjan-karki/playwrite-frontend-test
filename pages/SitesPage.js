@@ -8,7 +8,7 @@ export class SitesPage {
   }
 
   /** @param {string} name */
-  async selectProduct(name) {
+  async selectSite(name) {
     await this.page.getByText(name, { exact: true }).click();
     await this.loadingOverlay.waitFor({ state: 'hidden' });
   }

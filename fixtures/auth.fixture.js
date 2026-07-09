@@ -1,13 +1,14 @@
 // @ts-check
 import { test as base, expect } from '@playwright/test';
 import { LoginPage } from '../pages/LoginPage.js';
-import { standardUser } from '../test-data/users.js';
 
 /**
  * @typedef {Object} AuthFixtures
  * @property {LoginPage} loginPage
  * @property {import('@playwright/test').Page} authenticatedPage
  */
+
+const authFile = 'playwright/.auth/user.json';
 
 /** @type {import('@playwright/test').TestType<
  *   import('@playwright/test').PlaywrightTestArgs & import('@playwright/test').PlaywrightTestOptions & AuthFixtures,
@@ -18,13 +19,20 @@ export const test = base.extend({
     await use(new LoginPage(page));
   },
 
-  /** Page that is already logged in and sitting on the sites page. */
-  authenticatedPage: async ({ page }, use) => {
-    const loginPage = new LoginPage(page);
-    await loginPage.goto();
-    await loginPage.login(standardUser.email, standardUser.password);
-    await use(page);
-  },
+  /**
+   * Single browser context/page reusing the session saved by tests/auth.setup.js.
+   * Created once per worker and shared across all tests; each test reloads the sites
+   * page itself instead of opening/closing a browser per test.
+   */
+  authenticatedPage: [
+    async ({ browser }, use) => {
+      const context = await browser.newContext({ storageState: authFile });
+      const page = await context.newPage();
+      await use(page);
+      await context.close();
+    },
+    { scope: 'worker' },
+  ],
 });
 
 export { expect };

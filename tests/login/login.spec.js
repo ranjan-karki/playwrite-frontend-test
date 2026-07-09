@@ -1,6 +1,9 @@
 // @ts-check
 import { test, expect } from '../../fixtures/auth.fixture.js';
 import { standardUser } from '../../test-data/users.js';
+import { requireEnv } from '../../utils/env.js';
+
+const siteName = requireEnv('TEST_SITE_NAME');
 
 
 test.describe('Login validation', () => {
@@ -37,7 +40,7 @@ test.describe('Login validation', () => {
     await loginPage.login(standardUser.email, standardUser.password);
 
     // The post-login redirect and sites table can take longer than the default timeout.
-    await expect(page.getByText('Pet-benefits', { exact: true })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(siteName, { exact: true })).toBeVisible({ timeout: 15_000 });
   });
 });
 });
