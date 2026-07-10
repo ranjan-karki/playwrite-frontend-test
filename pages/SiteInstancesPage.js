@@ -1,4 +1,6 @@
 // @ts-check
+import { escapeRegExp } from '../utils/basicUtils.js';
+import { messages } from '../test-data/message.js';
 
 export class SiteInstancesPage {
   /** @param {import('@playwright/test').Page} page */
@@ -34,8 +36,16 @@ export class SiteInstancesPage {
     this.selectedThemeCheckmark = page.locator('.layout-item .fas.fa-check-circle');
     this.createButton = page.getByRole('button', { name: 'Create' });
     this.closeButton = page.getByRole('button', { name: 'Close' });
-    this.titleLengthError = page.getByText('The title may not be greater than 255 characters.');
-    this.slugLengthError = page.getByText('The slug may not be greater than 60 characters.');
+    this.titleLengthError = page.getByText(messages.titleMax);
+    this.slugLengthError = page.getByText(messages.instances.slugMax);
+
+    // Color picker popover — each color input owns its own popover, but only the
+    // active one carries the `open` class, so scope everything to it rather than
+    // relying on page-wide textbox indices.
+    this.openColorPicker = page.locator('.color-picker.open');
+    this.openColorPickerPalette = this.openColorPicker.locator('.saturation-lightness');
+    this.openColorPickerHexInput = this.openColorPicker.getByRole('textbox').first();
+    this.openColorPickerOkButton = this.openColorPicker.getByRole('button', { name: 'OK' });
 
     // Edit instance form
     this.editInstanceHeading = page.getByRole('heading', { name: ' Edit instance' });
@@ -79,6 +89,30 @@ export class SiteInstancesPage {
     await this.slugInput.click();
   }
 
+  /**
+   * Opens the picker for the given color input and picks a color by clicking
+   * the saturation/lightness palette, then confirms with OK.
+   * @param {import('@playwright/test').Locator} colorInput
+   */
+  async pickColorFromPalette(colorInput) {
+    await colorInput.click();
+    await this.openColorPickerPalette.click();
+    await this.openColorPickerOkButton.click();
+  }
+
+  /**
+   * Opens the picker for the given color input and sets the color by typing a
+   * hex value into the picker's own input field.
+   * @param {import('@playwright/test').Locator} colorInput
+   * @param {string} hexValue
+   */
+  async enterColorHexValue(colorInput, hexValue) {
+    await colorInput.click();
+    await this.openColorPickerHexInput.click();
+    await this.openColorPickerHexInput.fill(hexValue);
+    await this.openColorPickerHexInput.press('Enter');
+  }
+
   async selectLybTileTheme() {
     await this.lybTilePlusImage.click();
   }
@@ -106,7 +140,7 @@ export class SiteInstancesPage {
   async openRowActionsMenu(name) {
     const titleRow = this.page
       .locator('.ag-pinned-left-cols-container .ag-row')
-      .filter({ hasText: new RegExp(`^${name}$`) });
+      .filter({ hasText: new RegExp(`^${escapeRegExp(name)}$`) });
     const rowIndex = await titleRow.getAttribute('row-index');
     await this.page.locator(`.ag-pinned-right-cols-container .ag-row[row-index="${rowIndex}"] button`).click();
   }

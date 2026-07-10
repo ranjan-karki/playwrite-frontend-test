@@ -73,6 +73,13 @@ test.describe(`${siteName} - Update instance`, () => {
     await form.selectLybTileTheme();
     await expect(form.saveButton).toBeEnabled();
     await form.save();
+
+    await expect(authenticatedPage.getByText(updateInstanceInputs.updatedTitle, { exact: true })).toBeVisible();
+
+    // Restore the original title so later tests can still find this instance by name.
+    await form.openEditForm(updateInstanceInputs.updatedTitle);
+    await form.fillTitle(instanceName);
+    await form.save();
   });
 
   test('shows validation error when title exceeds 255 characters', async ({ authenticatedPage }) => {
@@ -87,11 +94,11 @@ test.describe(`${siteName} - Update instance`, () => {
     await form.closeForm();
   });
 
-  test('shows validation error when slug exceeds 60 characters', async ({ authenticatedPage }) => {
+  test('shows validation error when slug exceeds 50 characters', async ({ authenticatedPage }) => {
     const form = new SiteInstancesPage(authenticatedPage);
 
     await form.openEditForm(instanceName);
-    await form.fillSlug(updateInstanceInputs.longSlug);
+    await form.fillSlug(updateInstanceInputs.overLimitSlug);
     await form.save();
 
     await expect(form.slugLengthError).toBeVisible();
@@ -131,7 +138,7 @@ test.describe(`${siteName} - Update instance`, () => {
 
   test('updates slug with a minimum-length value', async ({ authenticatedPage }) => {
     const form = new SiteInstancesPage(authenticatedPage);
-    const tempTitle = 'Min slug holder';
+    const tempTitle = updateInstanceInputs.minSlugHolderTitle;
 
     // Slugs must be unique, so claim the boundary value with a throwaway instance first,
     // then free it up again so it can be applied to the real target instance below.
@@ -158,9 +165,9 @@ test.describe(`${siteName} - Update instance`, () => {
     await form.save();
   });
 
-  test('updates slug with a maximum-length (60 char) value', async ({ authenticatedPage }) => {
+  test('updates slug with a maximum-length (50 char) value', async ({ authenticatedPage }) => {
     const form = new SiteInstancesPage(authenticatedPage);
-    const tempTitle = 'Max slug holder';
+    const tempTitle = updateInstanceInputs.maxSlugHolderTitle;
 
     await form.openNewInstanceForm();
     await form.fillTitle(tempTitle);
