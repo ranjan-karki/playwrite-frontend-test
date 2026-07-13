@@ -31,13 +31,18 @@ export class SiteInstancesPage {
     this.secondaryColorLabel = page.getByText('Secondary color');
     this.secondaryColorInput = page.getByRole('textbox', { name: 'Secondary color' });
     this.cancelCreateButtons = page.getByText('Cancel Create');
-    this.lybTilePlusThumb = page.locator('div').filter({ hasText: 'Lyb tile plus' }).nth(5);
-    this.lybTilePlusImage = page.getByRole('img', { name: 'Lyb tile plus' });
-    this.selectedThemeCheckmark = page.locator('.layout-item .fas.fa-check-circle');
+    // Theme tiles are environment data — their names and count differ per machine —
+    // so locate them structurally rather than by thumbnail name.
+    this.themeTiles = page.locator('.layout-item');
+    this.themeThumbnails = this.themeTiles.getByRole('img');
+    // Every tile carries a check icon in the DOM; only the selected tile's is shown.
+    this.unselectedThemeTiles = this.themeTiles.filter({ hasNot: page.locator('.fas.fa-check-circle:visible') });
+    this.selectedThemeCheckmark = page.locator('.layout-item .fas.fa-check-circle:visible');
     this.createButton = page.getByRole('button', { name: 'Create' });
     this.closeButton = page.getByRole('button', { name: 'Close' });
     this.titleLengthError = page.getByText(messages.titleMax);
     this.slugLengthError = page.getByText(messages.instances.slugMax);
+    this.slugInvalidCharsError = page.getByText(messages.instances.slugInvalidChars);
 
     // Color picker popover — each color input owns its own popover, but only the
     // active one carries the `open` class, so scope everything to it rather than
@@ -113,8 +118,12 @@ export class SiteInstancesPage {
     await this.openColorPickerHexInput.press('Enter');
   }
 
-  async selectLybTileTheme() {
-    await this.lybTilePlusImage.click();
+  /**
+   * Selects the first theme that isn't currently selected — theme names vary per
+   * environment, so no specific thumbnail can be targeted.
+   */
+  async selectTheme() {
+    await this.unselectedThemeTiles.first().getByRole('img').click();
   }
 
   async closeForm() {

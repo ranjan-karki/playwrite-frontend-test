@@ -21,20 +21,19 @@ export const MAX_TITLE = randomAlphaNumeric(TITLE_MAX_LENGTH);
 export const MIN_SLUG = randomLowerAlpha(1);
 export const MAX_SLUG = randomLowerAlpha(SLUG_MAX_LENGTH);
 
-// The slug field only accepts letters: integers and special characters are rejected
-// on input, so only the letter portion of this value should survive.
-export const SLUG_VALID_PART = randomLowerAlpha(8);
-export const INVALID_CHARS_SLUG = `1${SLUG_VALID_PART.slice(0, 4)}2!@#$%^&*()${SLUG_VALID_PART.slice(4)}3.`;
+// The slug field keeps typed integers and special characters — validation flags
+// them once the field loses focus instead of stripping them on input.
+const SLUG_LETTER_PART = randomLowerAlpha(8);
+export const INVALID_CHARS_SLUG = `1${SLUG_LETTER_PART.slice(0, 4)}2!@#$%^&*()${SLUG_LETTER_PART.slice(4)}3.`;
 
 export const EXTREME_TITLE_LENGTH = 10000;
 
 export const newInstanceInputs = {
   title: `title ${randomAlphaNumeric(8)}`,
-  emptyCheckSlug: randomLowerAlpha(8),
+  emptyCheckSlug: randomLowerAlpha(10),
   minSlugTitle: `Min slug instance ${randomAlphaNumeric(8)}`,
   maxSlugTitle: `Max slug instance ${randomAlphaNumeric(8)}`,
   invalidCharsSlug: INVALID_CHARS_SLUG,
-  slugValidPart: SLUG_VALID_PART,
   longTitle: LONG_TITLE,
   longSlug: LONG_SLUG,
   overLimitSlug: OVER_LIMIT_SLUG,
@@ -42,6 +41,26 @@ export const newInstanceInputs = {
   maxTitle: MAX_TITLE,
   minSlug: MIN_SLUG,
   maxSlug: MAX_SLUG,
+};
+
+// Specs that edit an existing instance create their own target row with these
+// titles instead of relying on an environment-specific instance name.
+export const targetInstanceTitles = {
+  update: `Update target ${randomAlphaNumeric(6)}`,
+  rowActions: `Row actions target ${randomAlphaNumeric(6)}`,
+};
+
+// Filler slugs for tests whose assertions aren't about the slug itself — each
+// creation flow gets its own value so rows never collide on the unique slug field.
+export const fillerSlugs = {
+  enableCheck: randomLowerAlpha(10),
+  themeFlow: randomLowerAlpha(10),
+  longTitle: randomLowerAlpha(10),
+  minTitle: randomLowerAlpha(10),
+  maxTitle: randomLowerAlpha(10),
+  deletable: randomLowerAlpha(10),
+  updateTarget: randomLowerAlpha(10),
+  rowActionsTarget: randomLowerAlpha(10),
 };
 
 export const updateInstanceInputs = {
@@ -78,45 +97,81 @@ export const pickerColorInputs = {
 
 const slugPart = () => randomLowerAlpha(4);
 
-// Slug formats the input accepts but the server must reject on submit.
-// Unicode/encoded/HTML fragments are fixed by nature; the letter parts are random.
-export const invalidSlugCases = Object.entries({
-  'containing uppercase letters': `${slugPart().toUpperCase()}${slugPart()}`,
-  'containing spaces': `${slugPart()} ${slugPart()}`,
-  'starting with a hyphen': `-${slugPart()}`,
-  'ending with a hyphen': `${slugPart()}-`,
-  'containing consecutive hyphens': `${slugPart()}--${slugPart()}`,
-  'containing an underscore': `${slugPart()}_${slugPart()}`,
-  'containing a period': `${slugPart()}.${slugPart()}`,
-  'containing only numbers': `${randomNumber(5)}`,
-  'that is a single hyphen': '-',
-  'containing unicode characters': `${slugPart()}é漢`,
-  'containing URL-encoded characters': `${slugPart()}%20${slugPart()}`,
-  'containing HTML tags': `<b>${slugPart()}</b>`,
-}).map(([description, slug]) => ({
-  description,
+/**
+ * @param {string} description
+ * @param {string} slug
+ */
+const invalidSlugCase = (description, slug) => ({
   slug,
   title: `Invalid slug ${description} ${randomAlphaNumeric(6)}`,
-}));
+});
 
-export const validSlugCases = [
-  { description: 'containing hyphens', slug: `${slugPart()}-${slugPart()}`, title: `Hyphen slug instance ${randomAlphaNumeric(6)}` },
-  { description: 'containing numbers and letters', slug: `${slugPart()}${randomNumber(3)}`, title: `Alnum slug instance ${randomAlphaNumeric(6)}` },
-];
+// Slug formats the input accepts but Create must reject: the availability check
+// only confirms the slug isn't already taken — the format itself is validated
+// only once the Create button is clicked. Unicode/encoded/HTML fragments are
+// fixed by nature; the letter parts are random.
+export const invalidSlugs = {
+  uppercase: invalidSlugCase('containing uppercase letters', `${slugPart().toUpperCase()}${slugPart()}`),
+  spaces: invalidSlugCase('containing spaces', `${slugPart()} ${slugPart()}`),
+  leadingHyphen: invalidSlugCase('starting with a hyphen', `-${slugPart()}`),
+  trailingHyphen: invalidSlugCase('ending with a hyphen', `${slugPart()}-`),
+  consecutiveHyphens: invalidSlugCase('containing consecutive hyphens', `${slugPart()}--${slugPart()}`),
+  underscore: invalidSlugCase('containing an underscore', `${slugPart()}_${slugPart()}`),
+  period: invalidSlugCase('containing a period', `${slugPart()}.${slugPart()}`),
+  onlyNumbers: invalidSlugCase('containing only numbers', `${randomNumber(5)}`),
+  singleHyphen: invalidSlugCase('that is a single hyphen', '-'),
+  unicode: invalidSlugCase('containing unicode characters', `${slugPart()}é漢`),
+  urlEncoded: invalidSlugCase('containing URL-encoded characters', `${slugPart()}%20${slugPart()}`),
+  htmlTags: invalidSlugCase('containing HTML tags', `<b>${slugPart()}</b>`),
+};
+
+export const validSlugs = {
+  hyphens: { slug: `${slugPart()}-${slugPart()}`, title: `Hyphen slug instance ${randomAlphaNumeric(6)}` },
+  alphanumeric: { slug: `${slugPart()}${randomNumber(3)}`, title: `Alnum slug instance ${randomAlphaNumeric(6)}` },
+};
+
+/** @param {keyof typeof securityPayloads} key */
+const titleSecurityCase = (key) => ({
+  title: `${securityPayloads[key]} ${randomAlphaNumeric(6)}`,
+  slug: randomLowerAlpha(10),
+});
+
+/** @param {keyof typeof securityPayloads} key */
+const slugSecurityCase = (key) => ({
+  slug: securityPayloads[key],
+  title: `Slug security ${key} ${randomAlphaNumeric(6)}`,
+});
 
 // Security payloads typed into the title should be stored and rendered as literal
 // text (sanitized); typed into the slug they are invalid formats and must be rejected.
-export const titleSecurityCases = Object.entries(securityPayloads).map(([key, payload]) => ({
-  key,
-  title: `${payload} ${randomAlphaNumeric(6)}`,
-  slug: randomLowerAlpha(10),
-}));
+export const titleSecurity = {
+  xss: titleSecurityCase('xss'),
+  htmlInjection: titleSecurityCase('htmlInjection'),
+  sqlInjection: titleSecurityCase('sqlInjection'),
+  specialCharString: titleSecurityCase('specialCharString'),
+  pathTraversal: titleSecurityCase('pathTraversal'),
+};
 
-export const slugSecurityCases = Object.entries(securityPayloads).map(([key, payload]) => ({
-  key,
-  slug: payload,
-  title: `Slug security ${key} ${randomAlphaNumeric(6)}`,
-}));
+export const slugSecurity = {
+  xss: slugSecurityCase('xss'),
+  htmlInjection: slugSecurityCase('htmlInjection'),
+  sqlInjection: slugSecurityCase('sqlInjection'),
+  specialCharString: slugSecurityCase('specialCharString'),
+  pathTraversal: slugSecurityCase('pathTraversal'),
+};
+
+/** @param {keyof typeof securityPayloads} key */
+const updateTitleSecurityCase = (key) => `${securityPayloads[key]} ${randomAlphaNumeric(6)}`;
+
+// Titles used when editing an existing instance; suffixed separately from the
+// add-instance payload titles so the two suites never collide on a row name.
+export const updateTitleSecurity = {
+  xss: updateTitleSecurityCase('xss'),
+  htmlInjection: updateTitleSecurityCase('htmlInjection'),
+  sqlInjection: updateTitleSecurityCase('sqlInjection'),
+  specialCharString: updateTitleSecurityCase('specialCharString'),
+  pathTraversal: updateTitleSecurityCase('pathTraversal'),
+};
 
 export const duplicateSlugInputs = {
   slug: randomLowerAlpha(10),

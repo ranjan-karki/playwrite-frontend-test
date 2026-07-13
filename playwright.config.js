@@ -34,26 +34,24 @@ module.exports = defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
-      name: 'setup',
-      testMatch: /.*\.setup\.js/,
-    },
-
-    {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-      dependencies: ['setup'],
+      use: {
+        ...devices['Desktop Chrome'],
+        /* Use the real (maximized) window size instead of a fixed viewport. */
+        viewport: null,
+        deviceScaleFactor: undefined,
+        launchOptions: { args: ['--start-maximized'] },
+      },
     },
 
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
-      dependencies: ['setup'],
     },
 
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
-      dependencies: ['setup'],
     },
 
     /* Test against mobile viewports. */

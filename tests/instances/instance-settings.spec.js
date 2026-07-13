@@ -18,133 +18,136 @@ test.describe(`${siteName} - Instance settings`, () => {
     await siteInstancesPage.openInstance(primaryInstanceName);
   });
 
+  test.describe('page display', () => {
+    test('displays the Settings page heading and info tooltip', async ({ authenticatedPage }) => {
+      const settingsPage = new InstanceSettingsPage(authenticatedPage);
+
+      await settingsPage.open();
+
+      await expect(settingsPage.heading).toBeVisible();
+
+      await settingsPage.openInfoTooltip();
+
+      await expect(settingsPage.tooltip).toBeVisible();
+      await expect(settingsPage.tooltipHeading).toBeVisible();
+      await expect(settingsPage.tooltipCloseIcon).toBeVisible();
+      await expect(settingsPage.tooltipBody).toContainText('Settings can be managed here.');
+      await expect(settingsPage.tooltipBody).toContainText('These options controls what features to be enabled to your site.');
+      await expect(settingsPage.pageSectionHeading).toBeVisible();
+
+      await settingsPage.closeInfoTooltip();
+    });
+  });
+
   // These tests are order-dependent: each one saves a setting change that the next test's
   // locators (nth-based status labels, nav links) rely on being in place.
+  test.describe('setting toggles', () => {
+    test('enabling the first setting shows the Homepage layout nav link', async ({ authenticatedPage }) => {
+      const settingsPage = new InstanceSettingsPage(authenticatedPage);
 
-  test('displays the Settings page heading and info tooltip', async ({ authenticatedPage }) => {
-    const settingsPage = new InstanceSettingsPage(authenticatedPage);
+      await settingsPage.open();
 
-    await settingsPage.open();
+      await expect(settingsPage.firstSettingDisabledStatus).toBeVisible();
+      await settingsPage.firstSettingDisabledStatus.click();
+      await settingsPage.toggleSlider();
 
-    await expect(settingsPage.heading).toBeVisible();
+      await expect(settingsPage.valueLabel.getByText('Enabled')).toBeVisible();
 
-    await settingsPage.openInfoTooltip();
+      await settingsPage.save();
 
-    await expect(settingsPage.tooltip).toBeVisible();
-    await expect(settingsPage.tooltipHeading).toBeVisible();
-    await expect(settingsPage.tooltipCloseIcon).toBeVisible();
-    await expect(settingsPage.tooltipBody).toContainText('Settings can be managed here.');
-    await expect(settingsPage.tooltipBody).toContainText('These options controls what features to be enabled to your site.');
-    await expect(settingsPage.pageSectionHeading).toBeVisible();
+      await expect(settingsPage.settingEnabledStatusNth1).toBeVisible();
+      await expect(settingsPage.navLink('Homepage layout')).toBeVisible();
+    });
 
-    await settingsPage.closeInfoTooltip();
-  });
+    test('disabling the first setting reveals Homepage resources', async ({ authenticatedPage }) => {
+      const settingsPage = new InstanceSettingsPage(authenticatedPage);
 
-  test('enabling the first setting shows the Homepage layout nav link', async ({ authenticatedPage }) => {
-    const settingsPage = new InstanceSettingsPage(authenticatedPage);
+      await settingsPage.open();
 
-    await settingsPage.open();
+      await settingsPage.settingEnabledStatusNth1.click();
+      await settingsPage.toggleSlider();
 
-    await expect(settingsPage.firstSettingDisabledStatus).toBeVisible();
-    await settingsPage.firstSettingDisabledStatus.click();
-    await settingsPage.toggleSlider();
+      await expect(settingsPage.valueLabel.getByText('Disabled')).toBeVisible();
 
-    await expect(settingsPage.valueLabel.getByText('Enabled')).toBeVisible();
+      await settingsPage.save();
 
-    await settingsPage.save();
+      await expect(settingsPage.homepageResourcesSection).toBeVisible();
+    });
 
-    await expect(settingsPage.settingEnabledStatusNth1).toBeVisible();
-    await expect(settingsPage.navLink('Homepage layout')).toBeVisible();
-  });
+    test('enabling Homepage resources shows its nav link', async ({ authenticatedPage }) => {
+      const settingsPage = new InstanceSettingsPage(authenticatedPage);
 
-  test('disabling the first setting reveals Homepage resources', async ({ authenticatedPage }) => {
-    const settingsPage = new InstanceSettingsPage(authenticatedPage);
+      await settingsPage.open();
 
-    await settingsPage.open();
+      await settingsPage.homepageResourcesRow.click();
+      await settingsPage.toggleSlider();
+      await settingsPage.save();
 
-    await settingsPage.settingEnabledStatusNth1.click();
-    await settingsPage.toggleSlider();
+      await expect(settingsPage.navLink('Homepage resources')).toBeVisible();
+    });
 
-    await expect(settingsPage.valueLabel.getByText('Disabled')).toBeVisible();
+    test('disabling Homepage resources shows Homepage videos and Buttons nav links', async ({ authenticatedPage }) => {
+      const settingsPage = new InstanceSettingsPage(authenticatedPage);
 
-    await settingsPage.save();
+      await settingsPage.open();
 
-    await expect(settingsPage.homepageResourcesSection).toBeVisible();
-  });
+      await settingsPage.settingEnabledStatusNth1.click();
+      await settingsPage.toggleSlider();
+      await settingsPage.save();
 
-  test('enabling Homepage resources shows its nav link', async ({ authenticatedPage }) => {
-    const settingsPage = new InstanceSettingsPage(authenticatedPage);
+      await expect(settingsPage.navLink('Homepage videos')).toBeVisible();
+      await expect(settingsPage.navLink('Buttons')).toBeVisible();
+    });
 
-    await settingsPage.open();
+    test('disabling the Buttons setting updates its status to Disabled', async ({ authenticatedPage }) => {
+      const settingsPage = new InstanceSettingsPage(authenticatedPage);
 
-    await settingsPage.homepageResourcesRow.click();
-    await settingsPage.toggleSlider();
-    await settingsPage.save();
+      await settingsPage.open();
 
-    await expect(settingsPage.navLink('Homepage resources')).toBeVisible();
-  });
+      await settingsPage.buttonsSettingRow.click();
+      await settingsPage.toggleSlider();
+      await settingsPage.save();
 
-  test('disabling Homepage resources shows Homepage videos and Buttons nav links', async ({ authenticatedPage }) => {
-    const settingsPage = new InstanceSettingsPage(authenticatedPage);
+      await expect(settingsPage.settingDisabledStatusNth2).toBeVisible();
+    });
 
-    await settingsPage.open();
+    test('re-enabling the Buttons setting shows its nav link again', async ({ authenticatedPage }) => {
+      const settingsPage = new InstanceSettingsPage(authenticatedPage);
 
-    await settingsPage.settingEnabledStatusNth1.click();
-    await settingsPage.toggleSlider();
-    await settingsPage.save();
+      await settingsPage.open();
 
-    await expect(settingsPage.navLink('Homepage videos')).toBeVisible();
-    await expect(settingsPage.navLink('Buttons')).toBeVisible();
-  });
+      await settingsPage.settingDisabledStatusNth2.click();
+      await settingsPage.toggleSlider();
+      await settingsPage.save();
 
-  test('disabling the Buttons setting updates its status to Disabled', async ({ authenticatedPage }) => {
-    const settingsPage = new InstanceSettingsPage(authenticatedPage);
+      await expect(settingsPage.navLink('Buttons')).toBeVisible();
+    });
 
-    await settingsPage.open();
+    test('enabling the first setting again shows the Homepage layout nav link', async ({ authenticatedPage }) => {
+      const settingsPage = new InstanceSettingsPage(authenticatedPage);
 
-    await settingsPage.buttonsSettingRow.click();
-    await settingsPage.toggleSlider();
-    await settingsPage.save();
+      await settingsPage.open();
 
-    await expect(settingsPage.settingDisabledStatusNth2).toBeVisible();
-  });
+      await settingsPage.firstSettingDisabledStatus.click();
+      await settingsPage.toggleSlider();
+      await settingsPage.save();
 
-  test('re-enabling the Buttons setting shows its nav link again', async ({ authenticatedPage }) => {
-    const settingsPage = new InstanceSettingsPage(authenticatedPage);
+      await expect(settingsPage.navLink('Homepage layout')).toBeVisible();
+    });
 
-    await settingsPage.open();
+    test('dismisses the edit settings prompt without saving, then enables the next setting', async ({ authenticatedPage }) => {
+      const settingsPage = new InstanceSettingsPage(authenticatedPage);
 
-    await settingsPage.settingDisabledStatusNth2.click();
-    await settingsPage.toggleSlider();
-    await settingsPage.save();
+      await settingsPage.open();
 
-    await expect(settingsPage.navLink('Buttons')).toBeVisible();
-  });
+      await settingsPage.disabledSettingRow.click();
+      await settingsPage.toggleSlider();
+      await settingsPage.editSettingsModalPrompt.click();
+      await settingsPage.close();
 
-  test('enabling the first setting again shows the Homepage layout nav link', async ({ authenticatedPage }) => {
-    const settingsPage = new InstanceSettingsPage(authenticatedPage);
-
-    await settingsPage.open();
-
-    await settingsPage.firstSettingDisabledStatus.click();
-    await settingsPage.toggleSlider();
-    await settingsPage.save();
-
-    await expect(settingsPage.navLink('Homepage layout')).toBeVisible();
-  });
-
-  test('dismisses the edit settings prompt without saving, then enables the next setting', async ({ authenticatedPage }) => {
-    const settingsPage = new InstanceSettingsPage(authenticatedPage);
-
-    await settingsPage.open();
-
-    await settingsPage.disabledSettingRow.click();
-    await settingsPage.toggleSlider();
-    await settingsPage.editSettingsModalPrompt.click();
-    await settingsPage.close();
-
-    await settingsPage.settingEnabledStatusNth1.click();
-    await settingsPage.toggleSlider();
-    await settingsPage.save();
+      await settingsPage.settingEnabledStatusNth1.click();
+      await settingsPage.toggleSlider();
+      await settingsPage.save();
+    });
   });
 });

@@ -146,6 +146,7 @@ export const messages = {
     slugMax: "The slug may not be greater than 50 characters.",
     slugType: "The slug must be a string.",
     slugInvalid: "The slug format is invalid.",
+    slugInvalidChars: "The slug may only contain letters, numbers, and dashes.",
     slugAlreadyTaken: "The slug has already been taken.",
   },
 };
