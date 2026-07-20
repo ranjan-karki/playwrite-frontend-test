@@ -6,7 +6,6 @@ import { SiteBrandingPage } from '../../pages/SiteBrandingPage.js';
 import { requireEnv } from '../../utils/env.js';
 import {
   SLUG_NOTE,
-  SLUG_INPUT_TRUNCATE_LENGTH,
   HEX_COLOR_PATTERN,
   newInstanceInputs,
   colorInputs,
@@ -45,12 +44,14 @@ async function expectCreateRejected(page, form, title, message) {
 /**
  * For slugs the form itself flags (characters outside the accepted set) the Create
  * button never enables, so there is nothing to click — the rejection IS the disabled
- * button. Closing the form must leave no row behind.
+ * button, alongside the inline invalid-characters error. Closing the form must leave
+ * no row behind.
  * @param {import('@playwright/test').Page} page
  * @param {SiteInstancesPage} form
  * @param {string} title
  */
 async function expectCreateBlocked(page, form, title) {
+  await expect(form.slugInvalidCharsError).toBeVisible();
   await expect(form.createButton).toBeDisabled();
   await form.closeForm();
   await expect(page.getByText(title, { exact: true })).not.toBeVisible();
@@ -144,6 +145,7 @@ test.describe(`${siteName} - Add instance`, () => {
 
       await form.fillTitle(newInstanceInputs.title);
       await form.fillSlug(fillerSlugs.enableCheck);
+      await form.blurSlugInput();
 
       await expect(form.createButton).toBeEnabled();
 
@@ -156,6 +158,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(newInstanceInputs.title);
       await form.fillSlug(fillerSlugs.themeFlow);
+      await form.blurSlugInput();
       await form.selectTheme();
       await expect(form.createButton).toBeVisible();
       await expect(form.closeButton).toBeVisible();
@@ -167,6 +170,7 @@ test.describe(`${siteName} - Add instance`, () => {
 
       await form.openNewInstanceForm();
       await form.fillSlug(newInstanceInputs.emptyCheckSlug);
+      await form.blurSlugInput();
 
       await expect(form.createButton).toBeDisabled();
 
@@ -192,6 +196,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(newInstanceInputs.longTitle);
       await form.fillSlug(fillerSlugs.longTitle);
+      await form.blurSlugInput();
       await form.createButton.click();
 
       await expect(form.titleLengthError).toBeVisible();
@@ -205,6 +210,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(extremeInputs.title);
       await form.fillSlug(extremeInputs.slug);
+      await form.blurSlugInput();
       await form.createButton.click();
 
       await expect(form.titleLengthError).toBeVisible();
@@ -218,10 +224,11 @@ test.describe(`${siteName} - Add instance`, () => {
       const form = new SiteInstancesPage(authenticatedPage);
 
       await form.openNewInstanceForm();
-      await form.fillTitle(newInstanceInputs.title);
-      await form.fillSlug(newInstanceInputs.longSlug);
+      await form.fillTitle(newInstanceInputs.maxTitle);
+      await form.triggerSlugAutofill();
 
-      await expect(form.slugInput).toHaveValue(newInstanceInputs.longSlug.slice(0, SLUG_INPUT_TRUNCATE_LENGTH));
+      await expect(form.slugInput).not.toHaveValue('');
+      await expect(form.slugLengthError).toBeVisible();
 
       await form.closeForm();
     });
@@ -232,6 +239,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(newInstanceInputs.title);
       await form.fillSlug(newInstanceInputs.invalidCharsSlug);
+      await form.blurSlugInput();
 
       await expectCreateBlocked(authenticatedPage, form, newInstanceInputs.title);
     });
@@ -242,6 +250,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(newInstanceInputs.title);
       await form.fillSlug(newInstanceInputs.overLimitSlug);
+      await form.blurSlugInput();
       await form.createButton.click();
 
       await expect(form.slugLengthError).toBeVisible();
@@ -256,6 +265,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(title);
       await form.fillSlug(slug);
+      await form.blurSlugInput();
 
       // Only allowed characters, so this passes the character check and fails the format rule.
       await expectCreateRejected(authenticatedPage, form, title, messages.instances.slugInvalid);
@@ -268,8 +278,10 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(title);
       await form.fillSlug(slug);
+      await form.blurSlugInput();
 
-      await expectCreateBlocked(authenticatedPage, form, title);
+      // Space isn't in the allowed character set, so the server rejects the format on submit.
+      await expectCreateRejected(authenticatedPage, form, title, messages.instances.slugInvalidChars);
     });
 
     test('rejects a slug starting with a hyphen', async ({ authenticatedPage }) => {
@@ -279,6 +291,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(title);
       await form.fillSlug(slug);
+      await form.blurSlugInput();
 
       // Only allowed characters, so this passes the character check and fails the format rule.
       await expectCreateRejected(authenticatedPage, form, title, messages.instances.slugInvalid);
@@ -291,6 +304,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(title);
       await form.fillSlug(slug);
+      await form.blurSlugInput();
 
       // Only allowed characters, so this passes the character check and fails the format rule.
       await expectCreateRejected(authenticatedPage, form, title, messages.instances.slugInvalid);
@@ -303,6 +317,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(title);
       await form.fillSlug(slug);
+      await form.blurSlugInput();
 
       // Only allowed characters, so this passes the character check and fails the format rule.
       await expectCreateRejected(authenticatedPage, form, title, messages.instances.slugInvalid);
@@ -315,6 +330,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(title);
       await form.fillSlug(slug);
+      await form.blurSlugInput();
 
       // Underscore passes the form's character check (Create enables), so the
       // rejection comes from the server-side format rule on submit.
@@ -328,8 +344,12 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(title);
       await form.fillSlug(slug);
+      await form.blurSlugInput();
 
-      await expectCreateBlocked(authenticatedPage, form, title);
+      // Period isn't in the allowed character set — the inline error surfaces once the
+      // availability check settles, and Create never enables.
+      await expect(form.slugInvalidCharsError).toBeVisible();
+      await expect(form.createButton).toBeDisabled();
     });
 
     test('rejects a slug that is a single hyphen', async ({ authenticatedPage }) => {
@@ -339,6 +359,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(title);
       await form.fillSlug(slug);
+      await form.blurSlugInput();
 
       // Only allowed characters, so this passes the character check and fails the format rule.
       await expectCreateRejected(authenticatedPage, form, title, messages.instances.slugInvalid);
@@ -351,8 +372,12 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(title);
       await form.fillSlug(slug);
+      await form.blurSlugInput();
 
-      await expectCreateBlocked(authenticatedPage, form, title);
+      // Unicode isn't in the allowed character set — the inline error surfaces once the
+      // availability check settles, and Create never enables.
+      await expect(form.slugInvalidCharsError).toBeVisible();
+      await expect(form.createButton).toBeDisabled();
     });
 
     test('rejects a slug containing URL-encoded characters', async ({ authenticatedPage }) => {
@@ -362,8 +387,12 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(title);
       await form.fillSlug(slug);
+      await form.blurSlugInput();
 
-      await expectCreateBlocked(authenticatedPage, form, title);
+      // URL-encoded characters aren't in the allowed character set — the inline error
+      // surfaces once the availability check settles, and Create never enables.
+      await expect(form.slugInvalidCharsError).toBeVisible();
+      await expect(form.createButton).toBeDisabled();
     });
 
     test('rejects a slug containing HTML tags', async ({ authenticatedPage }) => {
@@ -373,8 +402,12 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(title);
       await form.fillSlug(slug);
+      await form.blurSlugInput();
 
-      await expectCreateBlocked(authenticatedPage, form, title);
+      // HTML tags aren't in the allowed character set — the inline error surfaces once
+      // the availability check settles, and Create never enables.
+      await expect(form.slugInvalidCharsError).toBeVisible();
+      await expect(form.createButton).toBeDisabled();
     });
   });
 
@@ -481,6 +514,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(newInstanceInputs.minTitle);
       await form.fillSlug(fillerSlugs.minTitle);
+      await form.blurSlugInput();
       trackInstance(newInstanceInputs.minTitle);
       await form.createButton.click();
 
@@ -494,6 +528,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(newInstanceInputs.maxTitle);
       await form.fillSlug(fillerSlugs.maxTitle);
+      await form.blurSlugInput();
       trackInstance(newInstanceInputs.maxTitle);
       await form.createButton.click();
 
@@ -508,7 +543,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(title);
       await form.fillSlug(newInstanceInputs.minSlug);
-      await form.slugInput.click();
+      await form.blurSlugInput();
       trackInstance(title);
       await form.createButton.click();
 
@@ -524,7 +559,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(title);
       await form.fillSlug(newInstanceInputs.maxSlug);
-      await form.slugInput.click();
+      await form.blurSlugInput();
       trackInstance(title);
       await form.createButton.click();
 
@@ -539,6 +574,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(title);
       await form.fillSlug(slug);
+      await form.blurSlugInput();
       trackInstance(title);
       await form.createButton.click();
 
@@ -553,6 +589,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(title);
       await form.fillSlug(slug);
+      await form.blurSlugInput();
       trackInstance(title);
       await form.createButton.click();
 
@@ -566,6 +603,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(duplicateSlugInputs.holderTitle);
       await form.fillSlug(duplicateSlugInputs.slug);
+      await form.blurSlugInput();
       trackInstance(duplicateSlugInputs.holderTitle);
       await form.createButton.click();
       await expect(form.createInstanceHeading).not.toBeVisible();
@@ -573,6 +611,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(duplicateSlugInputs.secondTitle);
       await form.fillSlug(duplicateSlugInputs.slug);
+      await form.blurSlugInput();
       await expectCreateRejected(authenticatedPage, form, duplicateSlugInputs.secondTitle, messages.instances.slugAlreadyTaken);
     });
 
@@ -582,6 +621,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(reusedSlugInputs.firstTitle);
       await form.fillSlug(reusedSlugInputs.slug);
+      await form.blurSlugInput();
       trackInstance(reusedSlugInputs.firstTitle);
       await form.createButton.click();
       await expect(form.createInstanceHeading).not.toBeVisible();
@@ -593,6 +633,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(reusedSlugInputs.secondTitle);
       await form.fillSlug(reusedSlugInputs.slug);
+      await form.blurSlugInput();
       trackInstance(reusedSlugInputs.secondTitle);
       await form.createButton.click();
 
@@ -609,6 +650,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(title);
       await form.fillSlug(slug);
+      await form.blurSlugInput();
       trackInstance(title);
       await form.createButton.click();
 
@@ -624,6 +666,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(title);
       await form.fillSlug(slug);
+      await form.blurSlugInput();
       trackInstance(title);
       await form.createButton.click();
 
@@ -639,6 +682,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(title);
       await form.fillSlug(slug);
+      await form.blurSlugInput();
       trackInstance(title);
       await form.createButton.click();
 
@@ -654,6 +698,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(title);
       await form.fillSlug(slug);
+      await form.blurSlugInput();
       trackInstance(title);
       await form.createButton.click();
 
@@ -669,6 +714,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(title);
       await form.fillSlug(slug);
+      await form.blurSlugInput();
       trackInstance(title);
       await form.createButton.click();
 
@@ -684,6 +730,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(title);
       await form.fillSlug(slug);
+      await form.blurSlugInput();
 
       await expectCreateBlocked(authenticatedPage, form, title);
     });
@@ -695,6 +742,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(title);
       await form.fillSlug(slug);
+      await form.blurSlugInput();
 
       await expectCreateBlocked(authenticatedPage, form, title);
     });
@@ -706,6 +754,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(title);
       await form.fillSlug(slug);
+      await form.blurSlugInput();
 
       await expectCreateBlocked(authenticatedPage, form, title);
     });
@@ -717,6 +766,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(title);
       await form.fillSlug(slug);
+      await form.blurSlugInput();
 
       await expectCreateBlocked(authenticatedPage, form, title);
     });
@@ -728,6 +778,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.openNewInstanceForm();
       await form.fillTitle(title);
       await form.fillSlug(slug);
+      await form.blurSlugInput();
 
       await expectCreateBlocked(authenticatedPage, form, title);
     });

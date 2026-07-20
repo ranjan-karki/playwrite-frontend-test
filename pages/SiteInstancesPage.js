@@ -95,6 +95,17 @@ export class SiteInstancesPage {
   }
 
   /**
+   * Filling the title auto-generates a slug and kicks off an availability check for
+   * it before the explicit value from fillSlug overwrites the field; that stale check
+   * can still surface a slug error (e.g. length) tied to the slug input's focus state.
+   * Moving focus off the slug input clears it so a later Create click surfaces the
+   * validation the test actually expects instead of the stale slug error.
+   */
+  async blurSlugInput() {
+    await this.slugInput.blur();
+  }
+
+  /**
    * Opens the picker for the given color input and picks a color by clicking
    * the saturation/lightness palette, then confirms with OK.
    * @param {import('@playwright/test').Locator} colorInput
