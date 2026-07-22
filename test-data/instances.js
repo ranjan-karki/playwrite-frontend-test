@@ -21,10 +21,10 @@ export const MAX_TITLE = randomAlphaNumeric(TITLE_MAX_LENGTH);
 export const MIN_SLUG = randomLowerAlpha(1);
 export const MAX_SLUG = randomLowerAlpha(SLUG_MAX_LENGTH);
 
-// The slug field keeps typed integers and special characters — validation flags
-// them once the field loses focus instead of stripping them on input.
+// The slug field accepts letters, numbers, and dashes; special characters are kept
+// on input but validation flags them once the field loses focus.
 const SLUG_LETTER_PART = randomLowerAlpha(8);
-export const INVALID_CHARS_SLUG = `1${SLUG_LETTER_PART.slice(0, 4)}2!@#$%^&*()${SLUG_LETTER_PART.slice(4)}3.`;
+export const INVALID_CHARS_SLUG = `${SLUG_LETTER_PART.slice(0, 4)}!@#$%^&*()${SLUG_LETTER_PART.slice(4)}`;
 
 export const EXTREME_TITLE_LENGTH = 10000;
 

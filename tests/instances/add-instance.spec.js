@@ -44,14 +44,14 @@ async function expectCreateRejected(page, form, title, message) {
 /**
  * For slugs the form itself flags (characters outside the accepted set) the Create
  * button never enables, so there is nothing to click — the rejection IS the disabled
- * button, alongside the inline invalid-characters error. Closing the form must leave
- * no row behind.
+ * button, alongside the given inline error. Closing the form must leave no row behind.
  * @param {import('@playwright/test').Page} page
  * @param {SiteInstancesPage} form
  * @param {string} title
+ * @param {string} message
  */
-async function expectCreateBlocked(page, form, title) {
-  await expect(form.slugInvalidCharsError).toBeVisible();
+async function expectCreateBlocked(page, form, title, message) {
+  await expect(page.getByText(message)).toBeVisible();
   await expect(form.createButton).toBeDisabled();
   await form.closeForm();
   await expect(page.getByText(title, { exact: true })).not.toBeVisible();
@@ -233,7 +233,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.closeForm();
     });
 
-    test('does not accept integers or special characters in the slug', async ({ authenticatedPage }) => {
+    test('does not accept special characters in the slug', async ({ authenticatedPage }) => {
       const form = new SiteInstancesPage(authenticatedPage);
 
       await form.openNewInstanceForm();
@@ -241,7 +241,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.fillSlug(newInstanceInputs.invalidCharsSlug);
       await form.blurSlugInput();
 
-      await expectCreateBlocked(authenticatedPage, form, newInstanceInputs.title);
+      await expectCreateBlocked(authenticatedPage, form, newInstanceInputs.title, messages.instances.slugInvalid);
     });
 
     test('shows validation error when slug exceeds 50 characters', async ({ authenticatedPage }) => {
@@ -348,7 +348,7 @@ test.describe(`${siteName} - Add instance`, () => {
 
       // Period isn't in the allowed character set — the inline error surfaces once the
       // availability check settles, and Create never enables.
-      await expect(form.slugInvalidCharsError).toBeVisible();
+      await expect(authenticatedPage.getByText(messages.instances.slugInvalid)).toBeVisible();
       await expect(form.createButton).toBeDisabled();
     });
 
@@ -376,7 +376,7 @@ test.describe(`${siteName} - Add instance`, () => {
 
       // Unicode isn't in the allowed character set — the inline error surfaces once the
       // availability check settles, and Create never enables.
-      await expect(form.slugInvalidCharsError).toBeVisible();
+      await expect(authenticatedPage.getByText(messages.instances.slugInvalid)).toBeVisible();
       await expect(form.createButton).toBeDisabled();
     });
 
@@ -391,7 +391,7 @@ test.describe(`${siteName} - Add instance`, () => {
 
       // URL-encoded characters aren't in the allowed character set — the inline error
       // surfaces once the availability check settles, and Create never enables.
-      await expect(form.slugInvalidCharsError).toBeVisible();
+      await expect(authenticatedPage.getByText(messages.instances.slugInvalid)).toBeVisible();
       await expect(form.createButton).toBeDisabled();
     });
 
@@ -406,7 +406,7 @@ test.describe(`${siteName} - Add instance`, () => {
 
       // HTML tags aren't in the allowed character set — the inline error surfaces once
       // the availability check settles, and Create never enables.
-      await expect(form.slugInvalidCharsError).toBeVisible();
+      await expect(authenticatedPage.getByText(messages.instances.slugInvalid)).toBeVisible();
       await expect(form.createButton).toBeDisabled();
     });
   });
@@ -732,7 +732,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.fillSlug(slug);
       await form.blurSlugInput();
 
-      await expectCreateBlocked(authenticatedPage, form, title);
+      await expectCreateBlocked(authenticatedPage, form, title, messages.instances.slugInvalid);
     });
 
     test('rejects a slug containing a htmlInjection payload', async ({ authenticatedPage }) => {
@@ -744,7 +744,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.fillSlug(slug);
       await form.blurSlugInput();
 
-      await expectCreateBlocked(authenticatedPage, form, title);
+      await expectCreateBlocked(authenticatedPage, form, title, messages.instances.slugInvalid);
     });
 
     test('rejects a slug containing a sqlInjection payload', async ({ authenticatedPage }) => {
@@ -756,7 +756,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.fillSlug(slug);
       await form.blurSlugInput();
 
-      await expectCreateBlocked(authenticatedPage, form, title);
+      await expectCreateBlocked(authenticatedPage, form, title, messages.instances.slugInvalid);
     });
 
     test('rejects a slug containing a specialCharString payload', async ({ authenticatedPage }) => {
@@ -768,7 +768,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.fillSlug(slug);
       await form.blurSlugInput();
 
-      await expectCreateBlocked(authenticatedPage, form, title);
+      await expectCreateBlocked(authenticatedPage, form, title, messages.instances.slugInvalid);
     });
 
     test('rejects a slug containing a pathTraversal payload', async ({ authenticatedPage }) => {
@@ -780,7 +780,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.fillSlug(slug);
       await form.blurSlugInput();
 
-      await expectCreateBlocked(authenticatedPage, form, title);
+      await expectCreateBlocked(authenticatedPage, form, title, messages.instances.slugInvalid);
     });
 
     // The color inputs are readonly and only take values through the picker's hex
