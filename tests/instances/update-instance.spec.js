@@ -3,7 +3,16 @@ import { test, expect } from '../../fixtures/auth.fixture.js';
 import { SitesPage } from '../../pages/SitesPage.js';
 import { SiteInstancesPage } from '../../pages/SiteInstancesPage.js';
 import { requireEnv } from '../../utils/env.js';
-import { SLUG_NOTE, updateInstanceInputs, updateTitleSecurity, targetInstanceTitles, fillerSlugs } from '../../test-data/instances.js';
+import {
+  SLUG_NOTE,
+  updateInstanceInputs,
+  updateTitleSecurity,
+  targetInstanceTitles,
+  fillerSlugs,
+  invalidSlugs,
+  slugSecurity,
+} from '../../test-data/instances.js';
+import { messages } from '../../test-data/message.js';
 import { securityPayloads } from '../../test-data/securityPayloads.js';
 
 const siteName = requireEnv('TEST_SITE_NAME');
@@ -22,6 +31,21 @@ function trackInstance(title) {
   createdTitles.push(title);
 }
 
+/**
+ * For slugs that pass the form's own checks (Save is enabled) but are invalid on
+ * submit: clicks Save, expects the given rejection message, and the form stays
+ * open with the instance's slug left unchanged.
+ * @param {import('@playwright/test').Page} page
+ * @param {SiteInstancesPage} form
+ * @param {string} message
+ */
+async function expectSaveRejected(page, form, message) {
+  await form.save();
+  await expect(page.getByText(message).first()).toBeVisible();
+  await expect(form.editInstanceHeading).toBeVisible();
+  await form.closeForm();
+}
+
 test.describe(`${siteName} - Update instance`, () => {
   test.beforeAll(async ({ authenticatedPage }) => {
     const sitesPage = new SitesPage(authenticatedPage);
@@ -32,6 +56,7 @@ test.describe(`${siteName} - Update instance`, () => {
     await form.openNewInstanceForm();
     await form.fillTitle(instanceName);
     await form.fillSlug(fillerSlugs.updateTarget);
+    await form.blurSlugInput();
     await form.createButton.click();
 
     await expect(form.createInstanceHeading).not.toBeVisible();
@@ -266,6 +291,128 @@ test.describe(`${siteName} - Update instance`, () => {
       await form.fillSlug(originalSlug);
       await form.save();
     });
+
+    test('rejects a slug containing uppercase letters', async ({ authenticatedPage }) => {
+      const form = new SiteInstancesPage(authenticatedPage);
+      const { slug } = invalidSlugs.uppercase;
+
+      await form.openEditForm(instanceName);
+      await form.fillSlug(slug);
+      await form.blurSlugInput();
+
+      // Only allowed characters, so this passes the character check and fails the format rule.
+      await expectSaveRejected(authenticatedPage, form, messages.instances.slugInvalid);
+    });
+
+    test('rejects a slug containing spaces', async ({ authenticatedPage }) => {
+      const form = new SiteInstancesPage(authenticatedPage);
+      const { slug } = invalidSlugs.spaces;
+
+      await form.openEditForm(instanceName);
+      await form.fillSlug(slug);
+      await form.blurSlugInput();
+
+      await expectSaveRejected(authenticatedPage, form, messages.instances.slugInvalid);
+    });
+
+    test('rejects a slug starting with a hyphen', async ({ authenticatedPage }) => {
+      const form = new SiteInstancesPage(authenticatedPage);
+      const { slug } = invalidSlugs.leadingHyphen;
+
+      await form.openEditForm(instanceName);
+      await form.fillSlug(slug);
+      await form.blurSlugInput();
+
+      await expectSaveRejected(authenticatedPage, form, messages.instances.slugInvalid);
+    });
+
+    test('rejects a slug ending with a hyphen', async ({ authenticatedPage }) => {
+      const form = new SiteInstancesPage(authenticatedPage);
+      const { slug } = invalidSlugs.trailingHyphen;
+
+      await form.openEditForm(instanceName);
+      await form.fillSlug(slug);
+      await form.blurSlugInput();
+
+      await expectSaveRejected(authenticatedPage, form, messages.instances.slugInvalid);
+    });
+
+    test('rejects a slug containing consecutive hyphens', async ({ authenticatedPage }) => {
+      const form = new SiteInstancesPage(authenticatedPage);
+      const { slug } = invalidSlugs.consecutiveHyphens;
+
+      await form.openEditForm(instanceName);
+      await form.fillSlug(slug);
+      await form.blurSlugInput();
+
+      await expectSaveRejected(authenticatedPage, form, messages.instances.slugInvalid);
+    });
+
+    test('rejects a slug containing an underscore', async ({ authenticatedPage }) => {
+      const form = new SiteInstancesPage(authenticatedPage);
+      const { slug } = invalidSlugs.underscore;
+
+      await form.openEditForm(instanceName);
+      await form.fillSlug(slug);
+      await form.blurSlugInput();
+
+      await expectSaveRejected(authenticatedPage, form, messages.instances.slugInvalid);
+    });
+
+    test('rejects a slug containing a period', async ({ authenticatedPage }) => {
+      const form = new SiteInstancesPage(authenticatedPage);
+      const { slug } = invalidSlugs.period;
+
+      await form.openEditForm(instanceName);
+      await form.fillSlug(slug);
+      await form.blurSlugInput();
+
+      await expectSaveRejected(authenticatedPage, form, messages.instances.slugInvalid);
+    });
+
+    test('rejects a slug that is a single hyphen', async ({ authenticatedPage }) => {
+      const form = new SiteInstancesPage(authenticatedPage);
+      const { slug } = invalidSlugs.singleHyphen;
+
+      await form.openEditForm(instanceName);
+      await form.fillSlug(slug);
+      await form.blurSlugInput();
+
+      await expectSaveRejected(authenticatedPage, form, messages.instances.slugInvalid);
+    });
+
+    test('rejects a slug containing unicode characters', async ({ authenticatedPage }) => {
+      const form = new SiteInstancesPage(authenticatedPage);
+      const { slug } = invalidSlugs.unicode;
+
+      await form.openEditForm(instanceName);
+      await form.fillSlug(slug);
+      await form.blurSlugInput();
+
+      await expectSaveRejected(authenticatedPage, form, messages.instances.slugInvalid);
+    });
+
+    test('rejects a slug containing URL-encoded characters', async ({ authenticatedPage }) => {
+      const form = new SiteInstancesPage(authenticatedPage);
+      const { slug } = invalidSlugs.urlEncoded;
+
+      await form.openEditForm(instanceName);
+      await form.fillSlug(slug);
+      await form.blurSlugInput();
+
+      await expectSaveRejected(authenticatedPage, form, messages.instances.slugInvalid);
+    });
+
+    test('rejects a slug containing HTML tags', async ({ authenticatedPage }) => {
+      const form = new SiteInstancesPage(authenticatedPage);
+      const { slug } = invalidSlugs.htmlTags;
+
+      await form.openEditForm(instanceName);
+      await form.fillSlug(slug);
+      await form.blurSlugInput();
+
+      await expectSaveRejected(authenticatedPage, form, messages.instances.slugInvalid);
+    });
   });
 
   test.describe('security payloads', () => {
@@ -352,6 +499,61 @@ test.describe(`${siteName} - Update instance`, () => {
       await form.openEditForm(payloadTitle);
       await form.fillTitle(instanceName);
       await form.save();
+    });
+
+    test('rejects a slug containing a xss payload', async ({ authenticatedPage }) => {
+      const form = new SiteInstancesPage(authenticatedPage);
+      const { slug } = slugSecurity.xss;
+
+      await form.openEditForm(instanceName);
+      await form.fillSlug(slug);
+      await form.blurSlugInput();
+
+      await expectSaveRejected(authenticatedPage, form, messages.instances.slugInvalid);
+    });
+
+    test('rejects a slug containing a htmlInjection payload', async ({ authenticatedPage }) => {
+      const form = new SiteInstancesPage(authenticatedPage);
+      const { slug } = slugSecurity.htmlInjection;
+
+      await form.openEditForm(instanceName);
+      await form.fillSlug(slug);
+      await form.blurSlugInput();
+
+      await expectSaveRejected(authenticatedPage, form, messages.instances.slugInvalid);
+    });
+
+    test('rejects a slug containing a sqlInjection payload', async ({ authenticatedPage }) => {
+      const form = new SiteInstancesPage(authenticatedPage);
+      const { slug } = slugSecurity.sqlInjection;
+
+      await form.openEditForm(instanceName);
+      await form.fillSlug(slug);
+      await form.blurSlugInput();
+
+      await expectSaveRejected(authenticatedPage, form, messages.instances.slugInvalid);
+    });
+
+    test('rejects a slug containing a specialCharString payload', async ({ authenticatedPage }) => {
+      const form = new SiteInstancesPage(authenticatedPage);
+      const { slug } = slugSecurity.specialCharString;
+
+      await form.openEditForm(instanceName);
+      await form.fillSlug(slug);
+      await form.blurSlugInput();
+
+      await expectSaveRejected(authenticatedPage, form, messages.instances.slugInvalid);
+    });
+
+    test('rejects a slug containing a pathTraversal payload', async ({ authenticatedPage }) => {
+      const form = new SiteInstancesPage(authenticatedPage);
+      const { slug } = slugSecurity.pathTraversal;
+
+      await form.openEditForm(instanceName);
+      await form.fillSlug(slug);
+      await form.blurSlugInput();
+
+      await expectSaveRejected(authenticatedPage, form, messages.instances.slugInvalid);
     });
 
     // The color inputs are readonly and only take values through the picker's hex

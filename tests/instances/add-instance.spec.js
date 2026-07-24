@@ -34,9 +34,10 @@ const siteName = requireEnv('TEST_SITE_NAME');
  * @param {string} message
  */
 async function expectCreateRejected(page, form, title, message) {
-  await form.createButton.click();
+  
   await expect(page.getByText(message).first()).toBeVisible();
   await expect(form.createInstanceHeading).toBeVisible();
+  await form.createButton.click();
   await form.closeForm();
   await expect(page.getByText(title, { exact: true })).not.toBeVisible();
 }
@@ -281,7 +282,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.blurSlugInput();
 
       // Space isn't in the allowed character set, so the server rejects the format on submit.
-      await expectCreateRejected(authenticatedPage, form, title, messages.instances.slugInvalidChars);
+      await expectCreateBlocked(authenticatedPage, form, title, messages.instances.slugInvalid);
     });
 
     test('rejects a slug starting with a hyphen', async ({ authenticatedPage }) => {
@@ -612,7 +613,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await form.fillTitle(duplicateSlugInputs.secondTitle);
       await form.fillSlug(duplicateSlugInputs.slug);
       await form.blurSlugInput();
-      await expectCreateRejected(authenticatedPage, form, duplicateSlugInputs.secondTitle, messages.instances.slugAlreadyTaken);
+      await expectCreateBlocked(authenticatedPage, form, duplicateSlugInputs.secondTitle, messages.instances.slugAlreadyTaken);
     });
 
     test('allows reusing the slug of a deleted instance', async ({ authenticatedPage }) => {
