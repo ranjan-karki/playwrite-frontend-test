@@ -121,7 +121,7 @@ test.describe(`${siteName} - Add instance`, () => {
       await expect(form.primaryColorInput).toBeVisible();
       await expect(form.secondaryColorLabel).toBeVisible();
       await expect(form.secondaryColorInput).toBeVisible();
-      await expect(form.cancelCreateButtons).toBeVisible();
+      await expect(form.cancelButton).toBeVisible();
       await expect(form.themeThumbnails.first()).toBeVisible();
       await expect(form.createButton).toBeDisabled();
       await expect(form.selectedThemeCheckmark).toHaveCount(1);
@@ -349,8 +349,7 @@ test.describe(`${siteName} - Add instance`, () => {
 
       // Period isn't in the allowed character set — the inline error surfaces once the
       // availability check settles, and Create never enables.
-      await expect(authenticatedPage.getByText(messages.instances.slugInvalid)).toBeVisible();
-      await expect(form.createButton).toBeDisabled();
+      await expectCreateBlocked(authenticatedPage, form, title, messages.instances.slugInvalid);
     });
 
     test('rejects a slug that is a single hyphen', async ({ authenticatedPage }) => {
@@ -377,8 +376,7 @@ test.describe(`${siteName} - Add instance`, () => {
 
       // Unicode isn't in the allowed character set — the inline error surfaces once the
       // availability check settles, and Create never enables.
-      await expect(authenticatedPage.getByText(messages.instances.slugInvalid)).toBeVisible();
-      await expect(form.createButton).toBeDisabled();
+      await expectCreateBlocked(authenticatedPage, form, title, messages.instances.slugInvalid);
     });
 
     test('rejects a slug containing URL-encoded characters', async ({ authenticatedPage }) => {
@@ -392,8 +390,7 @@ test.describe(`${siteName} - Add instance`, () => {
 
       // URL-encoded characters aren't in the allowed character set — the inline error
       // surfaces once the availability check settles, and Create never enables.
-      await expect(authenticatedPage.getByText(messages.instances.slugInvalid)).toBeVisible();
-      await expect(form.createButton).toBeDisabled();
+      await expectCreateBlocked(authenticatedPage, form, title, messages.instances.slugInvalid);
     });
 
     test('rejects a slug containing HTML tags', async ({ authenticatedPage }) => {
@@ -407,8 +404,7 @@ test.describe(`${siteName} - Add instance`, () => {
 
       // HTML tags aren't in the allowed character set — the inline error surfaces once
       // the availability check settles, and Create never enables.
-      await expect(authenticatedPage.getByText(messages.instances.slugInvalid)).toBeVisible();
-      await expect(form.createButton).toBeDisabled();
+      await expectCreateBlocked(authenticatedPage, form, title, messages.instances.slugInvalid);
     });
   });
 

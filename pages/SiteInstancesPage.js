@@ -30,7 +30,7 @@ export class SiteInstancesPage {
     this.primaryColorInput = page.getByRole('textbox', { name: 'Primary color' });
     this.secondaryColorLabel = page.getByText('Secondary color');
     this.secondaryColorInput = page.getByRole('textbox', { name: 'Secondary color' });
-    this.cancelCreateButtons = page.getByText('Cancel Create');
+    this.cancelButton = page.getByRole('button', { name: 'Cancel', exact: true });
     // Theme tiles are environment data — their names and count differ per machine —
     // so locate them structurally rather than by thumbnail name.
     this.themeTiles = page.locator('.layout-item');
@@ -55,7 +55,6 @@ export class SiteInstancesPage {
     // Edit instance form
     this.editInstanceHeading = page.getByRole('heading', { name: ' Edit instance' });
     this.editMenuItem = page.getByText('Edit', { exact: true });
-    this.cancelEditButtons = page.getByText('Cancel Edit');
     this.saveButton = page.getByRole('button', { name: 'Save' });
 
     // Row actions menu (Edit, Copy, Set to default, Publish, Delete)

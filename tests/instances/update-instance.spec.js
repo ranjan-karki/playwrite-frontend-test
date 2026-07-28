@@ -46,6 +46,20 @@ async function expectSaveRejected(page, form, message) {
   await form.closeForm();
 }
 
+/**
+ * For slugs the form itself flags (characters outside the accepted set) the Save
+ * button never enables, so there is nothing to click — the rejection IS the disabled
+ * button, alongside the given inline error.
+ * @param {import('@playwright/test').Page} page
+ * @param {SiteInstancesPage} form
+ * @param {string} message
+ */
+async function expectSaveBlocked(page, form, message) {
+  await expect(page.getByText(message)).toBeVisible();
+  await expect(form.saveButton).toBeDisabled();
+  await form.closeForm();
+}
+
 test.describe(`${siteName} - Update instance`, () => {
   test.beforeAll(async ({ authenticatedPage }) => {
     const sitesPage = new SitesPage(authenticatedPage);
@@ -125,9 +139,10 @@ test.describe(`${siteName} - Update instance`, () => {
       await expect(form.primaryColorInput).toBeVisible();
       await expect(form.secondaryColorLabel).toBeVisible();
       await expect(form.secondaryColorInput).toBeVisible();
-      await expect(form.cancelEditButtons).toBeVisible();
+      await expect(form.cancelButton).toBeVisible();
       await expect(form.themeThumbnails.first()).toBeVisible();
-      await expect(form.saveButton).toBeEnabled();
+      // Save stays disabled until a change is made — opening the form alone doesn't enable it.
+      await expect(form.saveButton).toBeDisabled();
       await expect(form.selectedThemeCheckmark).toHaveCount(1);
       await form.closeForm();
     });
@@ -143,13 +158,17 @@ test.describe(`${siteName} - Update instance`, () => {
       await expect(form.editInstanceHeading).not.toBeVisible();
     });
 
-    test('keeps the Save button enabled when title and slug are populated', async ({ authenticatedPage }) => {
+    test('enables the Save button once a change is made', async ({ authenticatedPage }) => {
       const form = new SiteInstancesPage(authenticatedPage);
 
       await form.openEditForm(instanceName);
 
       await expect(form.titleInput).not.toHaveValue('');
       await expect(form.slugInput).not.toHaveValue('');
+      await expect(form.saveButton).toBeDisabled();
+
+      await form.fillTitle(updateInstanceInputs.updatedTitle);
+
       await expect(form.saveButton).toBeEnabled();
 
       await form.closeForm();
@@ -234,61 +253,41 @@ test.describe(`${siteName} - Update instance`, () => {
   test.describe('slug updates', () => {
     test('updates slug with a minimum-length value', async ({ authenticatedPage }) => {
       const form = new SiteInstancesPage(authenticatedPage);
-      const tempTitle = updateInstanceInputs.minSlugHolderTitle;
-
-      // Slugs must be unique, so claim the boundary value with a throwaway instance first,
-      // then free it up again so it can be applied to the real target instance below.
-      await form.openNewInstanceForm();
-      await form.fillTitle(tempTitle);
-      await form.fillSlug(updateInstanceInputs.minSlug);
-      const preservedSlug = await form.slugInput.inputValue();
-      trackInstance(tempTitle);
-      await form.createButton.click();
-      await expect(form.createInstanceHeading).not.toBeVisible();
-
-      // Deleting the holder mid-test is required — it frees the slug for the target.
-      await form.deleteInstance(tempTitle);
 
       await form.openEditForm(instanceName);
       const originalSlug = await form.slugInput.inputValue();
 
-      await form.fillSlug(preservedSlug);
+      await form.fillSlug(updateInstanceInputs.minSlug);
+      await form.blurSlugInput();
+      const appliedSlug = await form.slugInput.inputValue();
       await form.save();
 
       await form.openEditForm(instanceName);
-      await expect(form.slugInput).toHaveValue(preservedSlug);
+      await expect(form.slugInput).toHaveValue(appliedSlug);
 
       // Restore the original slug so the environment is left unchanged.
       await form.fillSlug(originalSlug);
+      await form.blurSlugInput();
       await form.save();
     });
 
     test('updates slug with a maximum-length (50 char) value', async ({ authenticatedPage }) => {
       const form = new SiteInstancesPage(authenticatedPage);
-      const tempTitle = updateInstanceInputs.maxSlugHolderTitle;
-
-      await form.openNewInstanceForm();
-      await form.fillTitle(tempTitle);
-      await form.fillSlug(updateInstanceInputs.maxSlug);
-      const preservedSlug = await form.slugInput.inputValue();
-      trackInstance(tempTitle);
-      await form.createButton.click();
-      await expect(form.createInstanceHeading).not.toBeVisible();
-
-      // Deleting the holder mid-test is required — it frees the slug for the target.
-      await form.deleteInstance(tempTitle);
 
       await form.openEditForm(instanceName);
       const originalSlug = await form.slugInput.inputValue();
 
-      await form.fillSlug(preservedSlug);
+      await form.fillSlug(updateInstanceInputs.maxSlug);
+      await form.blurSlugInput();
+      const appliedSlug = await form.slugInput.inputValue();
       await form.save();
 
       await form.openEditForm(instanceName);
-      await expect(form.slugInput).toHaveValue(preservedSlug);
+      await expect(form.slugInput).toHaveValue(appliedSlug);
 
       // Restore the original slug so the environment is left unchanged.
       await form.fillSlug(originalSlug);
+      await form.blurSlugInput();
       await form.save();
     });
 
@@ -312,7 +311,8 @@ test.describe(`${siteName} - Update instance`, () => {
       await form.fillSlug(slug);
       await form.blurSlugInput();
 
-      await expectSaveRejected(authenticatedPage, form, messages.instances.slugInvalid);
+      // Space isn't in the allowed character set — Save never enables.
+      await expectSaveBlocked(authenticatedPage, form, messages.instances.slugInvalid);
     });
 
     test('rejects a slug starting with a hyphen', async ({ authenticatedPage }) => {
@@ -367,7 +367,8 @@ test.describe(`${siteName} - Update instance`, () => {
       await form.fillSlug(slug);
       await form.blurSlugInput();
 
-      await expectSaveRejected(authenticatedPage, form, messages.instances.slugInvalid);
+      // Period isn't in the allowed character set — Save never enables.
+      await expectSaveBlocked(authenticatedPage, form, messages.instances.slugInvalid);
     });
 
     test('rejects a slug that is a single hyphen', async ({ authenticatedPage }) => {
@@ -389,7 +390,8 @@ test.describe(`${siteName} - Update instance`, () => {
       await form.fillSlug(slug);
       await form.blurSlugInput();
 
-      await expectSaveRejected(authenticatedPage, form, messages.instances.slugInvalid);
+      // Unicode isn't in the allowed character set — Save never enables.
+      await expectSaveBlocked(authenticatedPage, form, messages.instances.slugInvalid);
     });
 
     test('rejects a slug containing URL-encoded characters', async ({ authenticatedPage }) => {
@@ -400,7 +402,8 @@ test.describe(`${siteName} - Update instance`, () => {
       await form.fillSlug(slug);
       await form.blurSlugInput();
 
-      await expectSaveRejected(authenticatedPage, form, messages.instances.slugInvalid);
+      // URL-encoded characters aren't in the allowed character set — Save never enables.
+      await expectSaveBlocked(authenticatedPage, form, messages.instances.slugInvalid);
     });
 
     test('rejects a slug containing HTML tags', async ({ authenticatedPage }) => {
@@ -411,7 +414,8 @@ test.describe(`${siteName} - Update instance`, () => {
       await form.fillSlug(slug);
       await form.blurSlugInput();
 
-      await expectSaveRejected(authenticatedPage, form, messages.instances.slugInvalid);
+      // HTML tags aren't in the allowed character set — Save never enables.
+      await expectSaveBlocked(authenticatedPage, form, messages.instances.slugInvalid);
     });
   });
 
@@ -509,7 +513,7 @@ test.describe(`${siteName} - Update instance`, () => {
       await form.fillSlug(slug);
       await form.blurSlugInput();
 
-      await expectSaveRejected(authenticatedPage, form, messages.instances.slugInvalid);
+      await expectSaveBlocked(authenticatedPage, form, messages.instances.slugInvalid);
     });
 
     test('rejects a slug containing a htmlInjection payload', async ({ authenticatedPage }) => {
@@ -520,7 +524,7 @@ test.describe(`${siteName} - Update instance`, () => {
       await form.fillSlug(slug);
       await form.blurSlugInput();
 
-      await expectSaveRejected(authenticatedPage, form, messages.instances.slugInvalid);
+      await expectSaveBlocked(authenticatedPage, form, messages.instances.slugInvalid);
     });
 
     test('rejects a slug containing a sqlInjection payload', async ({ authenticatedPage }) => {
@@ -531,7 +535,7 @@ test.describe(`${siteName} - Update instance`, () => {
       await form.fillSlug(slug);
       await form.blurSlugInput();
 
-      await expectSaveRejected(authenticatedPage, form, messages.instances.slugInvalid);
+      await expectSaveBlocked(authenticatedPage, form, messages.instances.slugInvalid);
     });
 
     test('rejects a slug containing a specialCharString payload', async ({ authenticatedPage }) => {
@@ -542,7 +546,7 @@ test.describe(`${siteName} - Update instance`, () => {
       await form.fillSlug(slug);
       await form.blurSlugInput();
 
-      await expectSaveRejected(authenticatedPage, form, messages.instances.slugInvalid);
+      await expectSaveBlocked(authenticatedPage, form, messages.instances.slugInvalid);
     });
 
     test('rejects a slug containing a pathTraversal payload', async ({ authenticatedPage }) => {
@@ -553,7 +557,7 @@ test.describe(`${siteName} - Update instance`, () => {
       await form.fillSlug(slug);
       await form.blurSlugInput();
 
-      await expectSaveRejected(authenticatedPage, form, messages.instances.slugInvalid);
+      await expectSaveBlocked(authenticatedPage, form, messages.instances.slugInvalid);
     });
 
     // The color inputs are readonly and only take values through the picker's hex
