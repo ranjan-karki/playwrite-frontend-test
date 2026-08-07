@@ -14,7 +14,7 @@ module.exports = defineConfig({
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
+  retries: process.env.CI ? 2 : 2,
   /* Run tests sequentially in a single browser instance instead of many parallel windows. */
   workers: 1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */

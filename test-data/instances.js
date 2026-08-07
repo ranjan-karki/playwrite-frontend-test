@@ -49,6 +49,8 @@ export const targetInstanceTitles = {
   update: `Update target ${randomAlphaNumeric(6)}`,
   rowActions: `Row actions target ${randomAlphaNumeric(6)}`,
   homepageMessage: `Homepage message target ${randomAlphaNumeric(6)}`,
+  homepageVideos: `Homepage videos target ${randomAlphaNumeric(6)}`,
+  homepageResources: `Homepage resources target ${randomAlphaNumeric(6)}`,
 };
 
 // Filler slugs for tests whose assertions aren't about the slug itself — each
@@ -63,6 +65,8 @@ export const fillerSlugs = {
   updateTarget: randomLowerAlpha(10),
   rowActionsTarget: randomLowerAlpha(10),
   homepageMessageTarget: randomLowerAlpha(10),
+  homepageVideosTarget: randomLowerAlpha(10),
+  homepageResourcesTarget: randomLowerAlpha(10),
 };
 
 export const updateInstanceInputs = {
