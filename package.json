@@ -1,21 +1,14 @@
 {
-  "name": "fe-test",
+  "name": "playwrite-lyb-fe",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {
-    "test": "playwright test",
-    "test:headed": "playwright test --headed",
-    "test:ui": "playwright test --ui",
-    "report": "playwright show-report"
-  },
+  "scripts": {},
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
   "devDependencies": {
-    "@playwright/test": "^1.61.1",
-    "@types/node": "^26.1.0",
-    "dotenv": "^16.4.5"
+    "@playwright/test": "^1.61.0",
+    "@types/node": "^26.0.0"
   }
 }
