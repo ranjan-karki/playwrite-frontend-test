@@ -1,0 +1,208 @@
+# ── STAGING Frontend E2E pipeline ─────────────────────────────────────────────
+# Playwright FE E2E against the Dockerized LYB stack — backend API + Angular
+# frontend — feeding the STAGING Allure dashboard (the "Frontend E2E" suite).
+# Runs on merges to `development` (the staging line). Production has its own
+# pipeline (azure-pipelines-production.yml) that runs on `main`.
+#
+# Unlike the backend E2E pipeline this also brings up the Angular app (docker
+# compose profile: frontend), which mounts the checked-out lyb-v2-angular source
+# and `ng serve`s it on :4200. Playwright then drives that UI. The app entrypoint
+# migrates + seeds a fresh DB, and we seed the E2E fixtures, so login + a known
+# site are available.
+#
+# Requires:
+#   - A GitHub service connection that can read learnyourbenefits/lyb-v2-laravel
+#     AND learnyourbenefits/lyb-v2-angular -> set it in the `endpoint`s below.
+#   - The KV-linked 'lyc-kv' variable group (exposes secret allure-storage-key).
+
+# Staging line: run whenever the FE specs are merged to development.
+trigger:
+  branches:
+    include:
+      - development
+
+pool:
+  vmImage: ubuntu-latest
+
+resources:
+  repositories:
+    - repository: backend
+      type: github
+      name: learnyourbenefits/lyb-v2-laravel
+      endpoint: 'learnyourbenefits'
+      # TEMP: task/allure-report carries the docker startup entrypoint (composer
+      # install + E2E seeding) not yet on development. Revert to
+      # refs/heads/development once that branch is merged in.
+      ref: refs/heads/development
+    - repository: frontend
+      type: github
+      name: learnyourbenefits/lyb-v2-angular
+      endpoint: 'learnyourbenefits'
+      ref: refs/heads/development
+
+variables:
+  - group: lyc-kv
+  - name: allureStorageAccount
+    value: lycallure
+  - name: allureStorageContainer
+    value: allure
+  - name: apiBaseUrl
+    value: 'http://localhost:8080/api'
+  - name: appBaseUrl
+    value: 'http://localhost:4200'
+  - name: playwrightDir
+    value: '$(Build.SourcesDirectory)/playwright'
+  - name: backendDir
+    value: '$(Build.SourcesDirectory)/backend'
+  - name: frontendDir
+    value: '$(Build.SourcesDirectory)/frontend'
+  # Seeded test identity (not secret — created by the E2E seeders). Override in
+  # the pipeline's variables if your seeded data differs.
+  - name: testUserEmail
+    value: 'master.admin@learnyourbenefits.com'
+  - name: testUserPassword
+    value: 'LybTest@2026'
+  # The seeded main site's DISPLAYED title is "E2E <domain>" (E2EFixtureSeeder),
+  # and the specs match it by exact text — so this is the title, not the domain.
+  - name: testSiteName
+    value: 'E2E e2e-main'
+
+steps:
+  - checkout: self
+    path: s/playwright
+  - checkout: backend
+    path: s/backend
+  - checkout: frontend
+    path: s/frontend
+
+  - task: UseNode@1
+    displayName: 'Install Node.js'
+    inputs:
+      version: '22.x'
+
+  # The Angular app pulls private @ensue/* packages from the ensue Azure Artifacts
+  # feed. .npmrc is gitignored, so create it from the committed template and inject
+  # a feed token here. The angular container bind-mounts this source at /app, so
+  # its `npm install` (in docker-entrypoint.sh) picks up the authenticated .npmrc.
+  # NOTE: this pipeline's build-service identity needs Reader access to the
+  # 'ensue-packages' feed (same as the frontend build pipelines).
+  - script: cp lyb.npmrc .npmrc
+    workingDirectory: $(frontendDir)
+    displayName: 'Frontend: create .npmrc from template'
+
+  - task: npmAuthenticate@0
+    inputs:
+      workingFile: '$(frontendDir)/.npmrc'
+    displayName: 'Frontend: authenticate @ensue feed'
+
+  # Bring up ONLY the services E2E needs plus the Angular frontend. ANGULAR_ROOT
+  # is exported (shell env overrides the .env default) so the angular service
+  # mounts the checked-out frontend source and ng-serves it.
+  - script: |
+      set -e
+      cd "$(backendDir)/docker"
+      cp env.example .env
+      export ANGULAR_ROOT="$(frontendDir)"
+      docker compose --profile frontend up -d --build app database redis postgres angular
+    displayName: 'Start LYB stack (backend + frontend)'
+
+  # The app entrypoint composer-installs (the bind-mounted source has no vendor/
+  # in CI), migrates, then seeds — incl. E2EFixtureSeeder — and starts Apache
+  # LAST. So a *healthy* HTTP response (2xx/3xx, not a boot-time 404/5xx) means
+  # the backend is fully bootstrapped. Requires the backend branch to carry that
+  # startup entrypoint (see the note in the seed guard below).
+  - script: |
+      set -e
+      echo "Waiting for API at $(apiBaseUrl) ..."
+      for i in $(seq 1 120); do
+        code=$(curl -s -o /dev/null -w "%{http_code}" "$(apiBaseUrl)/documentation" || true)
+        if [ "$code" -ge 200 ] 2>/dev/null && [ "$code" -lt 400 ]; then
+          echo "API is up (HTTP $code) after $((i*5))s"; exit 0
+        fi
+        sleep 5
+      done
+      echo "##vso[task.logissue type=error]API did not become ready (last HTTP $code). The app container must composer-install + migrate + seed on startup — confirm the checked-out backend branch carries that docker entrypoint."
+      docker compose -f "$(backendDir)/docker/docker-compose.yml" logs app | tail -120
+      exit 1
+    displayName: 'Wait for API ready'
+
+  # The entrypoint already seeds E2EFixtureSeeder on a fresh DB. Guard that the
+  # backend actually bootstrapped (vendor/ present), giving a clear message if
+  # not, then re-run the seeder idempotently as a safety net.
+  - script: |
+      set -e
+      cd "$(backendDir)/docker"
+      if ! docker compose exec -T app test -f vendor/autoload.php; then
+        echo "##vso[task.logissue type=error]Backend vendor/ is missing — the app container did not composer-install on startup. The checked-out backend branch (development) needs the docker startup entrypoint that runs 'composer install' + seeds E2EFixtureSeeder. Merge the backend E2E/docker commits into development."
+        docker compose logs app | tail -80
+        exit 1
+      fi
+      docker compose exec -T app php artisan db:seed --class=Database\\Seeders\\E2EFixtureSeeder --force
+    displayName: 'Verify backend + ensure E2E fixtures'
+
+  # ng serve compiles on boot (and installs the frontend deps into the mounted
+  # node_modules volume first) — allow up to ~10 min before giving up.
+  - script: |
+      set -e
+      echo "Waiting for frontend at $(appBaseUrl) (ng serve compile can take minutes) ..."
+      for i in $(seq 1 120); do
+        code=$(curl -s -o /dev/null -w "%{http_code}" "$(appBaseUrl)" || true)
+        if [ "$code" != "000" ] && [ "$code" -lt 500 ]; then
+          echo "Frontend is up (HTTP $code) after $((i*5))s"; exit 0
+        fi
+        sleep 5
+      done
+      echo "##vso[task.logissue type=error]Frontend did not become ready in time."
+      docker compose -f "$(backendDir)/docker/docker-compose.yml" logs angular | tail -120
+      exit 1
+    displayName: 'Wait for frontend ready'
+
+  - script: npm ci
+    displayName: 'Install Playwright deps'
+    workingDirectory: $(playwrightDir)
+
+  - script: npx playwright install --with-deps chromium
+    displayName: 'Install Playwright browser (chromium)'
+    workingDirectory: $(playwrightDir)
+
+  # CI=true flips the config to failure-only video and forbids test.only.
+  - script: npx playwright test
+    displayName: 'Run Playwright E2E'
+    workingDirectory: $(playwrightDir)
+    env:
+      CI: 'true'
+      BASE_URL: $(appBaseUrl)
+      TEST_USER_EMAIL: $(testUserEmail)
+      TEST_USER_PASSWORD: $(testUserPassword)
+      TEST_SITE_NAME: $(testSiteName)
+
+  # Upload FE Allure results to the shared report Blob (results/frontend-e2e/
+  # current). succeededOrFailed so failed runs still reach the report; secret via
+  # env: mapping, never inlined.
+  - script: |
+      set -e
+      if [ ! -d allure-results ]; then
+        echo "No allure-results — is allure-playwright registered? (playwright.config.js)"
+        exit 0
+      fi
+      az storage blob delete-batch \
+        --account-name "$(allureStorageAccount)" \
+        --source "$(allureStorageContainer)" \
+        --pattern "results/frontend-e2e/current/*" \
+        --account-key "$ALLURE_STORAGE_KEY" || true
+      az storage blob upload-batch \
+        --account-name "$(allureStorageAccount)" \
+        --destination "$(allureStorageContainer)/results/frontend-e2e/current" \
+        --source allure-results \
+        --account-key "$ALLURE_STORAGE_KEY" \
+        --overwrite true
+    displayName: 'Upload FE Allure results to Blob'
+    workingDirectory: $(playwrightDir)
+    env:
+      ALLURE_STORAGE_KEY: $(allure-storage-key)
+    condition: succeededOrFailed()
+
+  - script: |
+      cd "$(backendDir)/docker" && docker compose --profile frontend down -v || true
+    displayName: 'Tear down Docker stack'
+    condition: always()

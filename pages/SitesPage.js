@@ -10,6 +10,10 @@ export class SitesPage {
   /** @param {string} name */
   async selectSite(name) {
     await this.page.getByText(name, { exact: true }).click();
-    await this.loadingOverlay.waitFor({ state: 'hidden' });
+    // Bounded so a stuck spinner fails fast with a clear cause instead of eating
+    // the whole test timeout.
+    await this.loadingOverlay.waitFor({ state: 'hidden', timeout: 12_000 }).catch(() => {
+      throw new Error(`Site "${name}": .cssload-overlay never cleared — a page request is likely still pending (check the [net:*] logs).`);
+    });
   }
 }

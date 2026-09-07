@@ -140,9 +140,17 @@ export class SiteInstancesPage {
     await this.closeButton.click();
   }
 
-  /** @param {string} name */
+  /**
+   * Scoped to the pinned title column, like openRowActionsMenu below - an instance
+   * named "Default" also has its own "Default" status badge in the pinned-right
+   * columns, so an unscoped text match can hit either and violate strict mode.
+   * @param {string} name
+   */
   async openInstance(name) {
-    await this.page.getByText(name).click();
+    await this.page
+      .locator('.ag-pinned-left-cols-container .ag-row')
+      .filter({ hasText: new RegExp(`^${escapeRegExp(name)}$`) })
+      .click();
   }
 
   async save() {

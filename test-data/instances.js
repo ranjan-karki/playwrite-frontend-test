@@ -51,6 +51,7 @@ export const targetInstanceTitles = {
   homepageMessage: `Homepage message target ${randomAlphaNumeric(6)}`,
   homepageVideos: `Homepage videos target ${randomAlphaNumeric(6)}`,
   homepageResources: `Homepage resources target ${randomAlphaNumeric(6)}`,
+  instanceSettings: `Instance settings target ${randomAlphaNumeric(6)}`,
 };
 
 // Filler slugs for tests whose assertions aren't about the slug itself — each
@@ -67,19 +68,16 @@ export const fillerSlugs = {
   homepageMessageTarget: randomLowerAlpha(10),
   homepageVideosTarget: randomLowerAlpha(10),
   homepageResourcesTarget: randomLowerAlpha(10),
+  instanceSettingsTarget: randomLowerAlpha(10),
 };
 
+// The slug can't be edited from the update form (see the "slug" describe block in
+// update-instance.spec.js), so this only covers title fields.
 export const updateInstanceInputs = {
   updatedTitle: `Updated instance ${randomAlphaNumeric(8)}`,
-  minSlugHolderTitle: `Min slug holder ${randomAlphaNumeric(8)}`,
-  maxSlugHolderTitle: `Max slug holder ${randomAlphaNumeric(8)}`,
   longTitle: LONG_TITLE,
-  longSlug: LONG_SLUG,
-  overLimitSlug: OVER_LIMIT_SLUG,
   minTitle: MIN_TITLE,
   maxTitle: MAX_TITLE,
-  minSlug: MIN_SLUG,
-  maxSlug: MAX_SLUG,
 };
 
 // The color picker may normalize hex casing, so value assertions should compare
@@ -201,4 +199,10 @@ export const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
 export const defaultThemeColors = {
   primary: '#000000',
   secondary: '#FFFFFF',
+};
+
+export const copyInstanceInputs = {
+  sourceTitle: `Copy source ${randomAlphaNumeric(8)}`,
+  pageTitle: `Copy page ${randomAlphaNumeric(6)}`,
+  copyTitle: `Copy target ${randomAlphaNumeric(8)}`,
 };

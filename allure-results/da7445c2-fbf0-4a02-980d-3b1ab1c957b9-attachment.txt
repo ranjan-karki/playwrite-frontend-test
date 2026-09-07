@@ -1,0 +1,2 @@
+[net:failed] GET http://lyb.test/api/sites/3/instances/2/pages?all=1&domain=www — net::ERR_ABORTED
+[net:failed] GET http://lyb.test/api/sites/3/instances/2/homepage-layouts?domain=www — net::ERR_ABORTED

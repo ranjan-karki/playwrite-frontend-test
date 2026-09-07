@@ -132,6 +132,20 @@ export const messages = {
     idMismatch: "The request doesn't include correct set of resources.",
   },
 
+  // ─── Site Builder (UI) ──────────────────────────────────────────────────────
+  siteBuilder: {
+    shareLinkDescription: "Anyone with this link can view",
+    confirmUnpublish: "Are you sure you want to unpublish this site?",
+    confirmPublish: "Are you sure you want to publish this site?",
+    confirmEnableMaintenance: "Are you sure you want to enable maintenance mode?",
+    confirmDisableMaintenance: "Are you sure you want to remove maintenance mode?",
+    publishedToast: "The site has been published.",
+    unpublishedToast: "The site has been unpublished.",
+    maintenanceModeNotice:"This site is in Maintenance Mode. Visitors will only see the maintenance message instead of site content.",
+    maintananceModeToast: "Maintenance mode has been enabled.",
+    disableMaintananceModeToast: "Maintenance mode has been disabled.",
+  },
+
   // ─── Instances ──────────────────────────────────────────────────────────────
   instances: {
     layoutRequired: "The layout field is required.",
@@ -147,6 +161,6 @@ export const messages = {
     slugType: "The slug must be a string.",
     slugInvalid: "The slug format is invalid.",
     slugInvalidChars: "The slug may only contain letters, numbers, and dashes.",
-    slugAlreadyTaken: "The slug has already been taken.",
+    slugAlreadyTaken: "This slug is already taken.",
   },
 };

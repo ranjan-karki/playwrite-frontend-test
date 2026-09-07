@@ -1,0 +1,40 @@
+[net:failed] GET https://lycv2.blob.core.windows.net/lycv2/language-helper/tooltips.json — net::ERR_ABORTED
+[browser:error] ERROR TypeError: undefined is not iterable (cannot read property Symbol(Symbol.iterator))
+    at Array.from (<anonymous>)
+    at e.setOptionsOnInit (http://lyb.test/storage/themes/aJ36pBCG/lyb-tile-plus.js:2:357933)
+    at e.ngOnInit (http://lyb.test/storage/themes/aJ36pBCG/lyb-tile-plus.js:2:357834)
+    at e.ngOnInit (http://lyb.test/storage/themes/aJ36pBCG/lyb-tile-plus.js:2:397284)
+    at H_ (http://lyb.test/storage/themes/aJ36pBCG/lyb-tile-plus.js:2:31986)
+    at AA (http://lyb.test/storage/themes/aJ36pBCG/lyb-tile-plus.js:2:32130)
+    at j_ (http://lyb.test/storage/themes/aJ36pBCG/lyb-tile-plus.js:2:31891)
+    at Qa (http://lyb.test/storage/themes/aJ36pBCG/lyb-tile-plus.js:2:31617)
+    at pk (http://lyb.test/storage/themes/aJ36pBCG/lyb-tile-plus.js:2:64958)
+    at Oh (http://lyb.test/storage/themes/aJ36pBCG/lyb-tile-plus.js:2:66555)
+[browser:error] ERROR TypeError: undefined is not iterable (cannot read property Symbol(Symbol.iterator))
+    at Array.from (<anonymous>)
+    at e.setOptionsOnInit (http://lyb.test/storage/themes/aJ36pBCG/lyb-tile-plus.js:2:357933)
+    at e.ngOnInit (http://lyb.test/storage/themes/aJ36pBCG/lyb-tile-plus.js:2:357834)
+    at e.ngOnInit (http://lyb.test/storage/themes/aJ36pBCG/lyb-tile-plus.js:2:397284)
+    at H_ (http://lyb.test/storage/themes/aJ36pBCG/lyb-tile-plus.js:2:31986)
+    at AA (http://lyb.test/storage/themes/aJ36pBCG/lyb-tile-plus.js:2:32130)
+    at j_ (http://lyb.test/storage/themes/aJ36pBCG/lyb-tile-plus.js:2:31891)
+    at Qa (http://lyb.test/storage/themes/aJ36pBCG/lyb-tile-plus.js:2:31617)
+    at pk (http://lyb.test/storage/themes/aJ36pBCG/lyb-tile-plus.js:2:64958)
+    at Oh (http://lyb.test/storage/themes/aJ36pBCG/lyb-tile-plus.js:2:66555)
+[browser:error] ERROR TypeError: Cannot read properties of undefined (reading 'length')
+    at template (http://lyb.test/storage/themes/aJ36pBCG/lyb-tile-plus.js:2:403861)
+    at vv (http://lyb.test/storage/themes/aJ36pBCG/lyb-tile-plus.js:2:54807)
+    at pk (http://lyb.test/storage/themes/aJ36pBCG/lyb-tile-plus.js:2:64831)
+    at Oh (http://lyb.test/storage/themes/aJ36pBCG/lyb-tile-plus.js:2:66555)
+    at Fv (http://lyb.test/storage/themes/aJ36pBCG/lyb-tile-plus.js:2:66387)
+    at _k (http://lyb.test/storage/themes/aJ36pBCG/lyb-tile-plus.js:2:66349)
+    at Lv (http://lyb.test/storage/themes/aJ36pBCG/lyb-tile-plus.js:2:66692)
+    at pk (http://lyb.test/storage/themes/aJ36pBCG/lyb-tile-plus.js:2:65504)
+    at Oh (http://lyb.test/storage/themes/aJ36pBCG/lyb-tile-plus.js:2:66555)
+    at Fv (http://lyb.test/storage/themes/aJ36pBCG/lyb-tile-plus.js:2:66387)
+[browser:error] Access to font at 'http://lyb.test/storage/themes/aJ36pBCG/assets/fonts/proxima_nova_bold-webfont.woff2' from origin 'http://localhost:4200' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+[net:failed] GET http://lyb.test/storage/themes/aJ36pBCG/assets/fonts/proxima_nova_bold-webfont.woff2 — net::ERR_FAILED
+[browser:error] Failed to load resource: net::ERR_FAILED
+[browser:error] Access to font at 'http://lyb.test/storage/themes/aJ36pBCG/assets/fonts/proxima_nova_reg-webfont.woff2' from origin 'http://localhost:4200' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+[net:failed] GET http://lyb.test/storage/themes/aJ36pBCG/assets/fonts/proxima_nova_reg-webfont.woff2 — net::ERR_FAILED
+[browser:error] Failed to load resource: net::ERR_FAILED

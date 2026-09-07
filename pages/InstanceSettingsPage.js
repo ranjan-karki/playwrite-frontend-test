@@ -1,4 +1,5 @@
 // @ts-check
+import { expect } from '@playwright/test';
 
 export class InstanceSettingsPage {
   /** @param {import('@playwright/test').Page} page */
@@ -22,12 +23,15 @@ export class InstanceSettingsPage {
     this.saveButton = page.getByRole('button', { name: 'Save' });
     this.closeButton = page.getByRole('button', { name: 'Close' });
 
-    // Setting rows referenced by the recorded flow
-    this.firstSettingDisabledStatus = page.getByText('Disabled').first();
-    this.settingEnabledStatusNth1 = page.getByText('Enabled').nth(1);
+    // Used by homepage-resources.spec.js's beforeAll on a freshly-created instance,
+    // per a recorded flow - disabling this reveals Homepage resources.
     this.settingDisabledStatusNth2 = page.getByText('Disabled').nth(2);
     this.homepageResourcesSection = page.locator('div').filter({ hasText: /^Homepage resources$/ }).first();
-    this.homepageResourcesRow = page.getByText('Homepage resources');
+    // Scoped to the settings table component, not just page.getByText - once enabled,
+    // these also appear as nav links elsewhere on the page, which an unscoped locator
+    // would also match (and can click instead, navigating away from Settings entirely).
+    this.homepageResourcesRow = page.locator('app-site-instance-settings').getByText('Homepage resources');
+    this.homepageLayoutRow = page.locator('app-site-instance-settings').getByText('Homepage layout');
     this.buttonsSettingRow = page.locator('app-site-instance-settings').getByText('Buttons');
     this.disabledSettingRow = page.locator('div').filter({ hasText: /^Disabled$/ }).first();
     this.editSettingsModalPrompt = page.locator('#nico-modal-body div').filter({ hasText: 'Edit settings' });
@@ -47,6 +51,29 @@ export class InstanceSettingsPage {
 
   async toggleSlider() {
     await this.slider.click();
+  }
+
+  /**
+   * Ensures the given nav link is visible, running the given Settings steps to switch
+   * over first if it isn't. Used for mutually-exclusive homepage-type settings (Homepage
+   * videos vs Homepage resources), where a retried beforeAll can land on an instance
+   * already in the other state.
+   * @param {import('@playwright/test').Locator} navLink
+   * @param {() => Promise<void>} enable
+   */
+  async ensureNavLinkVisible(navLink, enable) {
+    // isVisible() checks the current DOM synchronously with no retrying, but the page
+    // we just navigated to may not have rendered its nav yet - waitFor here gives it a
+    // real chance to appear before concluding it's genuinely absent and needs enabling.
+    const alreadyVisible = await navLink
+      .waitFor({ state: 'visible', timeout: 5_000 })
+      .then(() => true)
+      .catch(() => false);
+
+    if (alreadyVisible) return;
+
+    await enable();
+    await expect(navLink).toBeVisible();
   }
 
   async save() {

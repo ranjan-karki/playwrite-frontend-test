@@ -1,0 +1,1 @@
+[net:failed] GET https://lycv2.blob.core.windows.net/lycv2/language-helper/tooltips.json — net::ERR_ABORTED

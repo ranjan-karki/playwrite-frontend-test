@@ -1,0 +1,58 @@
+# ── PRODUCTION Frontend E2E pipeline (SCAFFOLD / TODO) ────────────────────────
+# Sibling of azure-pipelines-staging.yml, for the PRODUCTION Allure dashboard.
+# Runs on merges to `main` and uploads its Allure results to a production results
+# path in Blob, which the PRODUCTION publisher folds into the separate production
+# Static Web App.
+#
+# NOT YET ACTIVE. Before enabling:
+#   1. Provision the production dashboard SWA + prod results prefix in lyb-infra
+#      (see the allure-report repo's DEPLOYMENT.md -> "Enabling production").
+#   2. Point backend/frontend `ref` at the production branches (master).
+#   3. Copy the working steps from azure-pipelines-staging.yml and change the
+#      upload destination to $(e2eResultsPath).
+#   4. Replace `trigger: none` with the `main` trigger block below.
+#
+# Kept as `trigger: none` so it can't run before the prod infra exists.
+trigger: none
+# When prod infra is ready, replace the line above with:
+# trigger:
+#   branches:
+#     include:
+#       - main
+
+pool:
+  vmImage: ubuntu-latest
+
+resources:
+  repositories:
+    - repository: backend
+      type: github
+      name: learnyourbenefits/lyb-v2-laravel
+      endpoint: 'learnyourbenefits'
+      ref: refs/heads/master          # TODO: production backend branch
+    - repository: frontend
+      type: github
+      name: learnyourbenefits/lyb-v2-angular
+      endpoint: 'learnyourbenefits'
+      ref: refs/heads/master          # TODO: production frontend branch
+
+variables:
+  - group: lyc-kv
+  - name: allureStorageAccount
+    value: lycallure
+  - name: allureStorageContainer
+    value: allure
+  # TODO: production results path — kept separate from staging's
+  # results/frontend-e2e/current so the two dashboards never cross-contaminate.
+  - name: e2eResultsPath
+    value: 'results/prod/frontend-e2e/current'
+
+# The steps mirror azure-pipelines-staging.yml exactly EXCEPT the upload
+# destination uses $(e2eResultsPath). Copy them here when enabling prod (kept out
+# of this scaffold to avoid two copies drifting).
+steps:
+  - script: |
+      echo "Production FE E2E pipeline is a scaffold. See azure-pipelines-staging.yml"
+      echo "for the working steps and the allure-report DEPLOYMENT.md -> 'Enabling production'."
+      exit 1
+    displayName: 'Not yet enabled (scaffold)'

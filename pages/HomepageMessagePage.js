@@ -56,9 +56,18 @@ export class HomepageMessagePage {
   async fillMessage(text) {
     await expect(async () => {
       await this.messageEditor.click();
+      // Clearing via real keyboard events first, rather than letting fill() replace
+      // existing content in one shot, keeps the whole interaction keyboard-driven -
+      // more likely to line up with what Froala/Angular's dirty-tracking expects,
+      // especially right after a save when the editor may have just remounted.
+      await this.messageEditor.press('ControlOrMeta+A');
+      await this.messageEditor.press('Backspace');
       await this.messageEditor.fill(text);
       await this.messageEditor.press('End');
-      await this.messageEditor.pressSequentially(' ');
+      // A quick tap-and-release can be too fast for Froala/Angular's dirty-check to
+      // register before the key is released - holding it briefly (keydown, pause,
+      // keyup) via the delay option gives it time to actually notice the keystroke.
+      await this.messageEditor.press(' ', { delay: 150 });
       await this.messageEditor.press('Backspace');
       await expect(this.saveButton).toBeEnabled({ timeout: 2_000 });
     }).toPass({ timeout: 15_000 });
@@ -81,6 +90,12 @@ export class HomepageMessagePage {
    * race the two concrete outcomes an app user would actually see: Cancel hides on a
    * successful save (remount complete), or the required-field error appears on a
    * rejected one (no remount, nothing to wait for).
+   *
+   * Cancel hiding doesn't guarantee the remount itself has finished though - under a
+   * full suite run's extra load that gap can widen enough for a following fillMessage
+   * to land mid-replacement anyway. On the success path, also wait for messageEditor
+   * (which locates by class, not the instance-specific id) to confirm the new editor
+   * is actually attached before returning.
    */
   async save() {
     await this.saveButton.click();
@@ -88,6 +103,10 @@ export class HomepageMessagePage {
       this.cancelButton.waitFor({ state: 'hidden' }),
       this.requiredError.waitFor({ state: 'visible' }),
     ]);
+
+    if (!(await this.requiredError.isVisible())) {
+      await this.messageEditor.waitFor({ state: 'visible' });
+    }
   }
 
   async cancel() {
